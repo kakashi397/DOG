@@ -1,0 +1,50 @@
+.wrapper {
+  padding: 0 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+h1 {
+  text-align: center;
+}
+
+fieldset {
+  margin-top: 2rem;
+}
+
+.form {
+
+  &__time-zone-radios,
+  &__town-name-radios {
+    display: flex;
+    gap: 1rem;
+  }
+
+  &__address {
+    margin-top: 1rem;
+  }
+
+  &__town-name-numbers {
+    margin-top: 1rem;
+
+    &>input[type='number'] {
+      width: 4rem;
+    }
+  }
+
+  &>button {
+    margin-top: 1rem;
+  }
+}
+
+ol {
+  padding: 0;
+}
+
+li {
+  list-style: none;
+}
+
+.hidden {
+  display: none;
+}
