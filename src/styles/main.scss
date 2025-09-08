@@ -1,0 +1,30 @@
+.wrapper {
+  padding: 0 20px;
+}
+
+h1 {
+  text-align: center;
+}
+
+fieldset {
+  margin-top: 2rem;
+}
+
+.form {
+
+  &__radios {
+    display: flex;
+  }
+
+  &__address {
+    margin-top: 1rem;
+
+    &>input[type='number'] {
+      width: 4rem;
+    }
+  }
+
+  &>button {
+    margin-top: 1rem;
+  }
+}

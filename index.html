@@ -10,28 +10,46 @@
 
 <body>
   <h1>Delivery Order Generator</h1>
-  <form action="">
+  <form action="" class="form wrapper">
     <fieldset>
-      <legend>時間帯</legend>
-      <input type="radio" name="time-zone" id="18-20" value="18-20"><label for="18-20">18-20時</label>
-      <input type="radio" name="time-zone" id="19-21" value="19-21"><label for="19-21">19-21時</label>
+      <legend>時間帯/住所</legend>
+      <div class="form__time-zone">
+        <input type="radio" name="time-zone" id="18-20" value="18-20"><label for="18-20">18-20時</label>
+        <input type="radio" name="time-zone" id="19-21" value="19-21"><label for="19-21">19-21時</label>
+      </div>
+      <div class="form__address">
+        <div class="form__address-radios">
+          <input type="radio" name="town-name" id="kashiiekimae" value="香椎駅前"><label for="kashiiekimae">香椎駅前</label>
+          <input type="radio" name="town-name" id="kashii" value="香椎"><label for="kashii">香椎</label>
+          <input type="radio" name="town-name" id="kashiiekihigashi" value="香椎駅東"><label for="kashiiekihigashi">香椎駅東</label>
+        </div>
+        <input type="number" id="chome" name="chome" placeholder="3">
+        <label for="chome">丁目</label>
+        <input type="number" id="banchi" name="banchi" placeholder="15">
+        <label for="banchi">番</label>
+        <input type="number" id="gou" name="gou" placeholder="1">
+        <label for="gou">号</label>
+      </div>
     </fieldset>
+    <button type="button" id="add-address">配達先を追加</button>
     <fieldset>
-      <legend>住所</legend>
-      <input type="radio" name="town-name" id="kashiiekimae" value="香椎駅前"><label for="kashiiekimae">香椎駅前</label>
-      <input type="radio" name="town-name" id="kashii" value="香椎"><label for="kashii">香椎</label>
-      <input type="radio" name="town-name" id="kashiiekihigashi" value="香椎駅東"><label for="kashiiekihigashi">香椎駅東</label>
-      <input type="number" id="chome" name="chome" placeholder="3">
-      <label for="chome">丁目</label>
-      <input type="number" id="banchi" name="banchi" placeholder="15">
-      <label for="banchi">番</label>
-      <input type="number" id="gou" name="gou" placeholder="1">
-      <label for="gou">号</label>
+      <legend>配達先リスト</legend>
+      <ol id="address-list"></ol>
     </fieldset>
-
-    <button>住所を追加</button>
-    <button type="submit">ルート生成</button>
+    
+    <button type="submit" id="generate-route">ルート生成</button>
   </form>
+
+  <div class="result wrapper">
+    <fieldset>
+      <legend>18~20時</legend>
+      <ol id="route-18-20"></ol>
+    </fieldset>
+    <fieldset>
+      <legend>19~21時</legend>
+      <ol id="route-19-21"></ol>
+    </fieldset>
+  </div>
 
 
   <script type="module" src="/src/main.js"></script>
