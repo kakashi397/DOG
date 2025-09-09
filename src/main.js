@@ -6,8 +6,10 @@ import './styles/main.scss';
 ---------- */
 // 「配達先を追加」ボタンを取得
 const addButton = document.querySelector('#add-address');
+// 「配達先を削除」ボタンを取得
+const removeButton = document.querySelector('#remove-address');
 // 配達先リストの枠を取得
-const addressList = document.querySelector('#address-list');
+const addressList = document.querySelector('#address-lists');
 // form全体を取得(id名から取得)
 const form = document.forms['form'];
 // time-zoneラジオボタンを取得する
@@ -48,6 +50,10 @@ const getBanchiValue = () => {
 // gouの値を取得する関数定義
 const getGouValue = () => {
   return gou.value;
+};
+// チェックされたチェックボックスを取得する関数定義
+const getCheckedBox = () => {
+  
 };
 
 
