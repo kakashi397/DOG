@@ -6,8 +6,10 @@ import './styles/main.scss';
 ---------- */
 // 「配達先を追加」ボタンを取得
 const addButton = document.querySelector('#add-address');
+// 「配達先を削除」ボタンを取得
+const removeButton = document.querySelector('#remove-address');
 // 配達先リストの枠を取得
-const addressList = document.querySelector('#address-list');
+const addressList = document.querySelector('#address-lists');
 // form全体を取得(id名から取得)
 const form = document.forms['form'];
 // time-zoneラジオボタンを取得する
@@ -21,9 +23,9 @@ const banchi = form.elements['banchi'];
 // gouインプットを取得する
 const gou = form.elements['gou'];
 // chomeラベルを取得する
-const labelForChome = document.querySelector('label[for = chome]');
+const labelForChome = document.querySelector('label[for="chome"]');
 // gouラベルを取得する
-const labelForGou = document.querySelector('label[for = gou]');
+const labelForGou = document.querySelector('label[for="gou"]');
 
 
 /* ----------
@@ -48,6 +50,10 @@ const getBanchiValue = () => {
 // gouの値を取得する関数定義
 const getGouValue = () => {
   return gou.value;
+};
+// チェックされたチェックボックスを取得する関数定義
+const getCheckedBox = () => {
+  
 };
 
 
@@ -78,19 +84,17 @@ addButton.addEventListener('click', (e) => {
   const chomeValue = getChomeValue();
   const banchiValue = getBanchiValue();
   const gouValue = getGouValue();
-  // 入力された値を成形する
   if (townNameValue === '大字香椎') {
+    // 入力された値を成形する
     const timeZoneAddress = `${timeZoneValue}: 福岡県福岡市東区${townNameValue}${banchiValue}番地`;
     // 成形されたテキストを配達先リストの枠内に表示する
     addressList.insertAdjacentHTML('beforeend', /* html */`<li>${timeZoneAddress}</li>`);
-    // フォームの入力をリセットする
-    form.reset();
   } else {
+    // 入力された値を成形する
     const timeZoneAddress = `${timeZoneValue}: 福岡県福岡市東区${townNameValue}${chomeValue}丁目${banchiValue}-${gouValue}`;
     // 成形されたテキストを配達先リストの枠内に表示する
     addressList.insertAdjacentHTML('beforeend', /* html */`<li>${timeZoneAddress}</li>`);
-    // フォームの入力をリセットする
-    form.reset();
   }
+  // フォームの入力をリセットする
+  form.reset();
 });
-

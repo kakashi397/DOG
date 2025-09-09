@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="js">
+<html lang="ja">
 
 <head>
   <meta charset="UTF-8" />
@@ -30,7 +30,8 @@
             <input type="radio" name="town-name" id="kashii" value="香椎"><label for="kashii">香椎</label>
           </div>
           <div class="form__town-name-3">
-            <input type="radio" name="town-name" id="kashiiekihigashi" value="香椎駅東"><label for="kashiiekihigashi">香椎駅東</label>
+            <input type="radio" name="town-name" id="kashiiekihigashi" value="香椎駅東"><label
+              for="kashiiekihigashi">香椎駅東</label>
           </div>
           <div class="form__town-name-4">
             <input type="radio" name="town-name" id="ooazakashii" value="大字香椎"><label for="ooazakashii">大字香椎</label>
@@ -45,13 +46,16 @@
           <label for="gou">号</label>
         </div>
       </div>
+      <button type="button" id="add-address">配達先を追加</button>
     </fieldset>
-    <button type="button" id="add-address">配達先を追加</button>
     <fieldset>
       <legend>配達先リスト</legend>
-      <ol id="address-list"></ol>
+      <ol id="address-lists">
+        <li><input type="checkbox" name="added-address" id="added-address">日本橋</li>
+      </ol>
+      <button type="button" id="remove-address">配達先を削除</button>
     </fieldset>
-    
+
     <button type="submit" id="generate-route">ルート生成</button>
   </form>
 
