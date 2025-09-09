@@ -51,9 +51,21 @@ const getBanchiValue = () => {
 const getGouValue = () => {
   return gou.value;
 };
+// 入力された値に応じて時間帯と住所のテキストを成形する関数定義
+const formatAddress = (timeZone, townName, chome, banchi, gou) => {
+  if (townName === '大字香椎') {
+    return `${timeZone}: 福岡県福岡市東区${townName}${banchi}番地`
+  } else {
+    return `${timeZone}: 福岡県福岡市東区${townName}${chome}丁目${banchi}-${gou}`
+  }
+};
+// 成形されたテキストを配達先リストの枠内に表示する関数定義
+const addFormattedAddress = (txt) => {
+  addressList.insertAdjacentHTML('beforeend', /* html */`<li>${txt}</li>`)
+};
 // チェックされたチェックボックスを取得する関数定義
 const getCheckedBox = () => {
-  
+
 };
 
 
@@ -84,17 +96,10 @@ addButton.addEventListener('click', (e) => {
   const chomeValue = getChomeValue();
   const banchiValue = getBanchiValue();
   const gouValue = getGouValue();
-  if (townNameValue === '大字香椎') {
-    // 入力された値を成形する
-    const timeZoneAddress = `${timeZoneValue}: 福岡県福岡市東区${townNameValue}${banchiValue}番地`;
-    // 成形されたテキストを配達先リストの枠内に表示する
-    addressList.insertAdjacentHTML('beforeend', /* html */`<li>${timeZoneAddress}</li>`);
-  } else {
-    // 入力された値を成形する
-    const timeZoneAddress = `${timeZoneValue}: 福岡県福岡市東区${townNameValue}${chomeValue}丁目${banchiValue}-${gouValue}`;
-    // 成形されたテキストを配達先リストの枠内に表示する
-    addressList.insertAdjacentHTML('beforeend', /* html */`<li>${timeZoneAddress}</li>`);
-  }
+  // 値に応じてテキストを成形する
+  const formattedTimeZoneAddress = formatAddress(timeZoneValue, townNameValue, chomeValue, banchiValue, gouValue);
+  // 成形されたテキストを配達先リストに送る
+  addFormattedAddress(formattedTimeZoneAddress);
   // フォームの入力をリセットする
   form.reset();
 });
