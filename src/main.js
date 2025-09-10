@@ -53,7 +53,7 @@ const getGouValue = () => {
   return gou.value;
 };
 // 項目の未入力がないかを調べ、配列にする関数定義
-const checkValues = (timeZone, townName, chome, banchi, gou) => {
+const getMissingFields = (timeZone, townName, chome, banchi, gou) => {
   const undefinedInputs = [];
   if (!timeZone) {
     undefinedInputs.push('時間帯');
@@ -68,7 +68,7 @@ const checkValues = (timeZone, townName, chome, banchi, gou) => {
     if (!chome) {
       undefinedInputs.push('丁目');
     }
-    if (!gou) {
+    if (!gou) { 
       undefinedInputs.push('号');
     }
   }
@@ -79,7 +79,7 @@ const checkValues = (timeZone, townName, chome, banchi, gou) => {
   return undefinedInputs;
 }
 // 未入力項目をフィードバックする関数定義
-const showFeedback = (arr) => {
+const showFeedbackMessage = (arr) => {
   if (arr.length > 0) {
     removeFeedbackMessage();
     const feedbackMessage = document.createElement('p');
@@ -141,10 +141,10 @@ addButton.addEventListener('click', (e) => {
   const banchiValue = getBanchiValue();
   const gouValue = getGouValue();
   // 項目の未入力がないかを調べる
-  const checkedValues = checkValues(timeZoneValue, townNameValue, chomeValue, banchiValue, gouValue);
+  const missingFields = getMissingFields(timeZoneValue, townNameValue, chomeValue, banchiValue, gouValue);
   // 未入力項目をフィードバックする
-  if (checkedValues.length) {
-    showFeedback(checkedValues);
+  if (missingFields.length) {
+    showFeedbackMessage(missingFields);
   } else { // 全部入力済みなら
     // 値に応じてテキストを成形する
     const formattedTimeZoneAddress = formatAddress(timeZoneValue, townNameValue, chomeValue, banchiValue, gouValue);
