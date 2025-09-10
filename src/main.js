@@ -78,15 +78,20 @@ const getMissingFields = (timeZone, townName, chome, banchi, gou) => {
   });
   return undefinedInputs;
 }
+// フィードバックメッセージ用の要素を作る関数定義
+const createFeedbackElement = (text) => {
+  const feedbackMessage = document.createElement('p');
+  feedbackMessage.textContent = text;
+  feedbackMessage.setAttribute('id', 'feedback-message');
+  feedbackMessage.classList.add('feedback');
+  return feedbackMessage;
+};
 // 未入力項目をフィードバックする関数定義
 const showFeedbackMessage = (arr) => {
   if (arr.length > 0) {
     removeFeedbackMessage();
-    const feedbackMessage = document.createElement('p');
-    feedbackMessage.textContent = `${arr}を入力してください`;
-    feedbackMessage.setAttribute('id', 'feedback-message');
-    feedbackMessage.style.color = 'red';
-    addButton.insertAdjacentElement('afterend', feedbackMessage);
+    const feedbackElement = createFeedbackElement(`${arr}を入力してください`);
+    addButton.insertAdjacentElement('afterend', feedbackElement);
   }
 };
 // フィードバックメッセージがあれば削除する関数定義
