@@ -28,6 +28,7 @@ const labelForChome = document.querySelector('label[for="chome"]');
 const labelForGou = document.querySelector('label[for="gou"]');
 
 
+
 /* ----------
 関数定義
 ---------- */
@@ -51,9 +52,64 @@ const getBanchiValue = () => {
 const getGouValue = () => {
   return gou.value;
 };
+// 項目の未入力がないかを調べ、配列にする関数定義
+const checkValues = (timeZone, townName, chome, banchi, gou) => {
+  const undefinedInputs = [];
+  if (!timeZone) {
+    undefinedInputs.push('時間帯');
+  }
+  if (!townName) {
+    undefinedInputs.push('町名');
+  }
+  if (!banchi) {
+    undefinedInputs.push('番地');
+  }
+  if (townName !== '大字香椎') {
+    if (!chome) {
+      undefinedInputs.push('丁目');
+    }
+    if (!gou) {
+      undefinedInputs.push('号');
+    }
+  }
+  const correctOrder = ['時間帯', '町名', '丁目', '番地', '号'];
+  undefinedInputs.sort((a, b) => {
+    return correctOrder.indexOf(a) - correctOrder.indexOf(b);
+  });
+  return undefinedInputs;
+}
+// 未入力項目をフィードバックする関数定義
+const showFeedback = (arr) => {
+  if (arr.length > 0) {
+    removeFeedbackMessage();
+    const feedbackMessage = document.createElement('p');
+    feedbackMessage.textContent = `${arr}を入力してください`;
+    feedbackMessage.setAttribute('id', 'feedback-message');
+    feedbackMessage.style.color = 'red';
+    addButton.insertAdjacentElement('afterend', feedbackMessage);
+  }
+};
+// フィードバックメッセージがあれば削除する関数定義
+const removeFeedbackMessage = () => {
+  if (document.querySelector('#feedback-message')) {
+    document.querySelector('#feedback-message').remove();
+  }
+};
+// 入力された値に応じて時間帯と住所のテキストを成形する関数定義
+const formatAddress = (timeZone, townName, chome, banchi, gou) => {
+  if (townName === '大字香椎') {
+    return `${timeZone}: 福岡県福岡市東区${townName}${banchi}番地`
+  } else {
+    return `${timeZone}: 福岡県福岡市東区${townName}${chome}丁目${banchi}-${gou}`
+  }
+};
+// 成形されたテキストを配達先リストの枠内に表示する関数定義
+const addFormattedAddress = (txt) => {
+  addressList.insertAdjacentHTML('beforeend', /* html */`<li>${txt}</li>`)
+};
 // チェックされたチェックボックスを取得する関数定義
 const getCheckedBox = () => {
-  
+
 };
 
 
@@ -66,12 +122,12 @@ const getCheckedBox = () => {
 townNameRadios.forEach((radio) => {
   radio.addEventListener('change', () => {
     // isOoazakashiiをtrue/falseに使う
-    const isOoazakasahii = (getTownNameValue() === '大字香椎');
+    const isOoazakashii = (getTownNameValue() === '大字香椎');
     // 各要素のクラスにisOoazakashiiのT/Fによってhiddenクラスをトグルする
-    chome.classList.toggle('hidden', isOoazakasahii);
-    labelForChome.classList.toggle('hidden', isOoazakasahii);
-    gou.classList.toggle('hidden', isOoazakasahii);
-    labelForGou.classList.toggle('hidden', isOoazakasahii);
+    chome.classList.toggle('hidden', isOoazakashii);
+    labelForChome.classList.toggle('hidden', isOoazakashii);
+    gou.classList.toggle('hidden', isOoazakashii);
+    labelForGou.classList.toggle('hidden', isOoazakashii);
   });
 });
 
@@ -84,17 +140,19 @@ addButton.addEventListener('click', (e) => {
   const chomeValue = getChomeValue();
   const banchiValue = getBanchiValue();
   const gouValue = getGouValue();
-  if (townNameValue === '大字香椎') {
-    // 入力された値を成形する
-    const timeZoneAddress = `${timeZoneValue}: 福岡県福岡市東区${townNameValue}${banchiValue}番地`;
-    // 成形されたテキストを配達先リストの枠内に表示する
-    addressList.insertAdjacentHTML('beforeend', /* html */`<li>${timeZoneAddress}</li>`);
-  } else {
-    // 入力された値を成形する
-    const timeZoneAddress = `${timeZoneValue}: 福岡県福岡市東区${townNameValue}${chomeValue}丁目${banchiValue}-${gouValue}`;
-    // 成形されたテキストを配達先リストの枠内に表示する
-    addressList.insertAdjacentHTML('beforeend', /* html */`<li>${timeZoneAddress}</li>`);
+  // 項目の未入力がないかを調べる
+  const checkedValues = checkValues(timeZoneValue, townNameValue, chomeValue, banchiValue, gouValue);
+  // 未入力項目をフィードバックする
+  if (checkedValues.length) {
+    showFeedback(checkedValues);
+  } else { // 全部入力済みなら
+    // 値に応じてテキストを成形する
+    const formattedTimeZoneAddress = formatAddress(timeZoneValue, townNameValue, chomeValue, banchiValue, gouValue);
+    // 成形されたテキストを配達先リストに送る
+    addFormattedAddress(formattedTimeZoneAddress);
+    // フィードバックが残っていれば削除する
+    removeFeedbackMessage();
+    // フォームの入力をリセットする
+    form.reset();
   }
-  // フォームの入力をリセットする
-  form.reset();
 });
