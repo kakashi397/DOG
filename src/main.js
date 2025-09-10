@@ -28,6 +28,7 @@ const labelForChome = document.querySelector('label[for="chome"]');
 const labelForGou = document.querySelector('label[for="gou"]');
 
 
+
 /* ----------
 関数定義
 ---------- */
@@ -80,14 +81,18 @@ const checkValues = (timeZone, townName, chome, banchi, gou) => {
 // 未入力項目をフィードバックする関数定義
 const showFeedback = (arr) => {
   if (arr.length > 0) {
-    if (document.querySelector('#feedback-message')) {
-      document.querySelector('#feedback-message').remove();
-    }
+    removeFeedbackMessage();
     const feedbackMessage = document.createElement('p');
     feedbackMessage.textContent = `${arr}を入力してください`;
     feedbackMessage.setAttribute('id', 'feedback-message');
     feedbackMessage.style.color = 'red';
     addButton.insertAdjacentElement('afterend', feedbackMessage);
+  }
+};
+// フィードバックメッセージがあれば削除する関数定義
+const removeFeedbackMessage = () => {
+  if (document.querySelector('#feedback-message')) {
+    document.querySelector('#feedback-message').remove();
   }
 };
 // 入力された値に応じて時間帯と住所のテキストを成形する関数定義
@@ -138,13 +143,15 @@ addButton.addEventListener('click', (e) => {
   // 項目の未入力がないかを調べる
   const checkedValues = checkValues(timeZoneValue, townNameValue, chomeValue, banchiValue, gouValue);
   // 未入力項目をフィードバックする
-  if (checkedValues) {
+  if (checkedValues.length) {
     showFeedback(checkedValues);
-  } else {
+  } else { // 全部入力済みなら
     // 値に応じてテキストを成形する
     const formattedTimeZoneAddress = formatAddress(timeZoneValue, townNameValue, chomeValue, banchiValue, gouValue);
     // 成形されたテキストを配達先リストに送る
     addFormattedAddress(formattedTimeZoneAddress);
+    // フィードバックが残っていれば削除する
+    removeFeedbackMessage();
     // フォームの入力をリセットする
     form.reset();
   }
