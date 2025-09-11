@@ -4,12 +4,6 @@ import './styles/main.scss';
 /* ---------
 取得
 ---------- */
-// 「配達先を追加」ボタンを取得
-const addButton = document.querySelector('#add-address');
-// 「配達先を削除」ボタンを取得
-const removeButton = document.querySelector('#remove-address');
-// 配達先リストの枠を取得
-const addressList = document.querySelector('#address-lists');
 // form全体を取得(id名から取得)
 const form = document.forms['form'];
 // time-zoneラジオボタンを取得する
@@ -26,33 +20,39 @@ const gou = form.elements['gou'];
 const labelForChome = document.querySelector('label[for="chome"]');
 // gouラベルを取得する
 const labelForGou = document.querySelector('label[for="gou"]');
+// 「配達先を追加」ボタンを取得
+const addButton = document.querySelector('#add-address');
+// 「配達先を削除」ボタンを取得
+const removeButton = document.querySelector('#remove-address');
+// 配達先リストの枠を取得
+const addressList = document.querySelector('#address-lists');
 
 
 
 /* ----------
 関数定義
 ---------- */
-// 選ばれたtime-zoneを取得する関数定義
+// 選ばれたtime-zoneを取得して返す関数定義
 const getTimeZoneValue = () => {
   return timeZoneRadios.value;
 };
-// 選ばれたtown-nameを取得する関数定義
+// 選ばれたtown-nameを取得して返す関数定義
 const getTownNameValue = () => {
   return townNameRadios.value;
 };
-// chomeの値を取得する関数定義
+// chomeの値を取得して返す関数定義
 const getChomeValue = () => {
   return chome.value;
 };
-// banchiの値を取得する関数定義
+// banchiの値を取得して返す関数定義
 const getBanchiValue = () => {
   return banchi.value;
 };
-// gouの値を取得する関数定義
+// gouの値を取得して返す関数定義
 const getGouValue = () => {
   return gou.value;
 };
-// 項目の未入力がないかを調べ、配列にする関数定義
+// 項目の未入力がないかを調べ、配列にして返す関数定義
 const getMissingFields = (timeZone, townName, chome, banchi, gou) => {
   const undefinedInputs = [];
   if (!timeZone) {
@@ -78,7 +78,7 @@ const getMissingFields = (timeZone, townName, chome, banchi, gou) => {
   });
   return undefinedInputs;
 }
-// フィードバックメッセージ用の要素を作る関数定義
+// フィードバックメッセージ用の要素を作って返す関数定義
 const createFeedbackElement = (text) => {
   const feedbackMessage = document.createElement('p');
   feedbackMessage.textContent = text;
@@ -120,15 +120,21 @@ const addFormattedAddress = (txt) => {
 
   // li>inputの構造にする
   li.appendChild(checkbox);
-  // liのテキストをtxtのものにする
+  // liのテキストをtxtのものにする .textContentだと子要素を全部消してtxtのみに置き換わる  今回はinputを残したいので.createTextNodeを使用する
   li.appendChild(document.createTextNode(txt));
 
   // ol>liの構造にする
   addressList.appendChild(li);
 };
-// チェックされたチェックボックスを取得する関数定義
-const getCheckedBox = () => {
-
+// チェックされた配達先を取得する関数定義
+const getCheckedboxes = () => {
+  return Array.from(document.getElementsByName('added-address')).filter(cb => cb.checked)
+};
+// チェックされた配達先を削除する関数定義
+const removeCheckedboxes = (arr) => {
+  arr.forEach((v) => {
+    v.parentElement.remove();
+  });
 };
 
 
@@ -149,8 +155,7 @@ townNameRadios.forEach((radio) => {
     labelForGou.classList.toggle('hidden', isOoazakashii);
   });
 });
-
-// 「配達先を追加」ボタンにクリックイベントリスナーをセット
+// 「配達先を追加」ボタンをクリックすると配達先リストに配達先を追加する
 addButton.addEventListener('click', (e) => {
   e.preventDefault();
   // 各ラジオボタン、入力欄の値を取得
@@ -174,4 +179,10 @@ addButton.addEventListener('click', (e) => {
     // フォームの入力をリセットする
     form.reset();
   }
+});
+// 「配達先を削除」ボタンを押すと選択された配達先を削除する
+removeButton.addEventListener('click', (e) => {
+  e.preventDefault;
+  const checkedboxes = getCheckedboxes();
+  removeCheckedboxes(checkedboxes);
 });
