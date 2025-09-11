@@ -26,6 +26,8 @@ const addButton = document.querySelector('#add-address');
 const removeButton = document.querySelector('#remove-address');
 // 配達先リストの枠を取得
 const addressList = document.querySelector('#address-lists');
+// 「ルート生成」ボタンを取得
+const generateRouteButton = document.querySelector('#generate-route');
 
 
 
@@ -86,7 +88,7 @@ const createFeedbackElement = (text) => {
   feedbackMessage.classList.add('feedback');
   return feedbackMessage;
 };
-// 未入力項目をフィードバックする関数定義
+// フィードバックメッセージを表示する関数定義
 const showFeedbackMessage = (arr) => {
   if (arr.length > 0) {
     removeFeedbackMessage();
@@ -128,13 +130,19 @@ const addFormattedAddress = (txt) => {
 };
 // チェックされた配達先を取得する関数定義
 const getCheckedboxes = () => {
-  return Array.from(document.getElementsByName('added-address')).filter(cb => cb.checked)
+  return Array.from(getAddedAddress()).forEach((v) => {
+    return v.querySelector('input');
+  }).filter(cb => cb.checked);
 };
 // チェックされた配達先を削除する関数定義
 const removeCheckedboxes = (arr) => {
   arr.forEach((v) => {
     v.parentElement.remove();
   });
+};
+// 配達先リストにある配達先を全て取得する関数定義
+const getAddedAddress = () => {
+  return addressList.children;
 };
 
 
@@ -185,4 +193,10 @@ removeButton.addEventListener('click', (e) => {
   e.preventDefault;
   const checkedboxes = getCheckedboxes();
   removeCheckedboxes(checkedboxes);
+});
+// 「ルート生成」ボタンへのイベントリスナー
+generateRouteButton.addEventListener('click', (e) => {
+  e.preventDefault();
+  console.log(getAddedAddress());
+  
 });
