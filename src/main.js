@@ -68,7 +68,7 @@ const getMissingFields = (timeZone, townName, chome, banchi, gou) => {
     if (!chome) {
       undefinedInputs.push('丁目');
     }
-    if (!gou) { 
+    if (!gou) {
       undefinedInputs.push('号');
     }
   }
@@ -110,7 +110,21 @@ const formatAddress = (timeZone, townName, chome, banchi, gou) => {
 };
 // 成形されたテキストを配達先リストの枠内に表示する関数定義
 const addFormattedAddress = (txt) => {
-  addressList.insertAdjacentHTML('beforeend', /* html */`<li>${txt}</li>`)
+  // li要素づくり
+  const li = document.createElement('li');
+  // input[type='checkbox']要素づくり
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.name = 'added-address';
+  checkbox.classList.add('checkbox');
+
+  // li>inputの構造にする
+  li.appendChild(checkbox);
+  // liのテキストをtxtのものにする
+  li.appendChild(document.createTextNode(txt));
+
+  // ol>liの構造にする
+  addressList.appendChild(li);
 };
 // チェックされたチェックボックスを取得する関数定義
 const getCheckedBox = () => {
