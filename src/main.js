@@ -130,21 +130,21 @@ const addFormattedAddress = (txt) => {
 };
 // チェックされた配達先を取得する関数定義
 const getCheckedboxes = () => {
-  return Array.from(getAddedAddress()).forEach((v) => {
-    return v.querySelector('input');
-  }).filter(cb => cb.checked);
+  return Array.from(getAddedAddress()).filter(li => {
+    const checkbox = li.querySelector('input[type="checkbox"]');
+    return checkbox && checkbox.checked
+  });
 };
 // チェックされた配達先を削除する関数定義
 const removeCheckedboxes = (arr) => {
-  arr.forEach((v) => {
-    v.parentElement.remove();
+  arr.forEach((li) => {
+    li.remove();
   });
 };
 // 配達先リストにある配達先を全て取得する関数定義
 const getAddedAddress = () => {
   return addressList.children;
 };
-
 
 
 /* ---------
@@ -197,6 +197,6 @@ removeButton.addEventListener('click', (e) => {
 // 「ルート生成」ボタンへのイベントリスナー
 generateRouteButton.addEventListener('click', (e) => {
   e.preventDefault();
-  console.log(getAddedAddress());
-  
+  const checkedboxes = getCheckedboxes();
+  removeCheckedboxes(checkedboxes);
 });
