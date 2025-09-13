@@ -28,8 +28,8 @@ const removeButton = document.querySelector('#remove-address');
 const addressList = document.querySelector('#address-lists');
 // 「ルート生成」ボタンを取得
 const generateRouteButton = document.querySelector('#generate-route');
-
-
+// GoogleMapsAPIキーを.envから取得する
+const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 /* ----------
 関数定義
@@ -203,7 +203,7 @@ generateRouteButton.addEventListener('click', async (e) => {
 
   for (const address of addresses) {
     try {
-      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=REDACTED`);
+      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`);
       const data = await res.json();
       console.log(address, data); // 住所ごとの結果を確認
       // 必要に応じて data を配列やオブジェクトに格納
