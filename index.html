@@ -9,7 +9,7 @@
 </head>
 
 <body>
-  <h1>Delivery Order Generator</h1>
+  <h1><a href="#">Delivery Order Generator</a></h1>
   <form action="" id="form" class="form wrapper">
     <fieldset>
       <legend>時間帯/住所</legend>
@@ -38,11 +38,11 @@
           </div>
         </div>
         <div class="form__town-name-numbers">
-          <input type="number" id="chome" name="chome" placeholder="1">
+          <input type="number" id="chome" name="chome">
           <label for="chome">丁目</label>
-          <input type="number" id="banchi" name="banchi" placeholder="1">
+          <input type="number" id="banchi" name="banchi">
           <label for="banchi">番地</label>
-          <input type="number" id="gou" name="gou" placeholder="1">
+          <input type="number" id="gou" name="gou">
           <label for="gou">号</label>
         </div>
       </div>
@@ -51,7 +51,12 @@
     <fieldset>
       <legend>配達先リスト</legend>
       <ol id="address-lists">
-        <li><input type="checkbox" name="added-address" id="added-address">日本橋</li>
+        <!-- ここにはJSにより動的にli>inputが入ります -->
+        <!-- 開発用の入力サンプル　ここから -->
+        <li><input type="checkbox" name="added-address" class="checkbox">18-20: 福岡県福岡市東区香椎駅前1丁目11-1</li>
+        <li><input type="checkbox" name="added-address" class="checkbox">19-21: 福岡県福岡市東区香椎1丁目1-1</li>
+        <li><input type="checkbox" name="added-address" class="checkbox">19-21: 福岡県福岡市東区香椎駅東2丁目22-1</li>
+        <!-- ここまで -->
       </ol>
       <button type="button" id="remove-address">配達先を削除</button>
     </fieldset>
@@ -62,16 +67,21 @@
   <div class="result wrapper">
     <fieldset>
       <legend>18~20時</legend>
-      <ol id="route-18-20"></ol>
+      <ol id="route-18-20">
+        <!-- ここにはJSにより動的にliが入ります -->
+      </ol>
     </fieldset>
     <fieldset>
       <legend>19~21時</legend>
-      <ol id="route-19-21"></ol>
+      <ol id="route-19-21">
+        <!-- ここにはJSにより動的にliが入ります -->
+      </ol>
     </fieldset>
   </div>
 
 
   <script type="module" src="/src/main.js"></script>
+
 </body>
 
 </html>

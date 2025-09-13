@@ -4,12 +4,6 @@ import './styles/main.scss';
 /* ---------
 取得
 ---------- */
-// 「配達先を追加」ボタンを取得
-const addButton = document.querySelector('#add-address');
-// 「配達先を削除」ボタンを取得
-const removeButton = document.querySelector('#remove-address');
-// 配達先リストの枠を取得
-const addressList = document.querySelector('#address-lists');
 // form全体を取得(id名から取得)
 const form = document.forms['form'];
 // time-zoneラジオボタンを取得する
@@ -26,34 +20,42 @@ const gou = form.elements['gou'];
 const labelForChome = document.querySelector('label[for="chome"]');
 // gouラベルを取得する
 const labelForGou = document.querySelector('label[for="gou"]');
-
-
+// 「配達先を追加」ボタンを取得
+const addButton = document.querySelector('#add-address');
+// 「配達先を削除」ボタンを取得
+const removeButton = document.querySelector('#remove-address');
+// 配達先リストの枠を取得
+const addressList = document.querySelector('#address-lists');
+// 「ルート生成」ボタンを取得
+const generateRouteButton = document.querySelector('#generate-route');
+// GoogleMapsAPIキーを.envから取得する
+const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 /* ----------
 関数定義
 ---------- */
-// 選ばれたtime-zoneを取得する関数定義
+// 選ばれたtime-zoneを取得して返す関数定義
 const getTimeZoneValue = () => {
   return timeZoneRadios.value;
 };
-// 選ばれたtown-nameを取得する関数定義
+// 選ばれたtown-nameを取得して返す関数定義
 const getTownNameValue = () => {
   return townNameRadios.value;
 };
-// chomeの値を取得する関数定義
+// chomeの値を取得して返す関数定義
 const getChomeValue = () => {
   return chome.value;
 };
-// banchiの値を取得する関数定義
+// banchiの値を取得して返す関数定義
 const getBanchiValue = () => {
   return banchi.value;
 };
-// gouの値を取得する関数定義
+// gouの値を取得して返す関数定義
 const getGouValue = () => {
   return gou.value;
 };
-// 項目の未入力がないかを調べ、配列にする関数定義
-const checkValues = (timeZone, townName, chome, banchi, gou) => {
+// 項目の未入力がないかを調べ、配列にして返す関数定義
+const getMissingFields = (timeZone, townName, chome, banchi, gou) => {
   const undefinedInputs = [];
   if (!timeZone) {
     undefinedInputs.push('時間帯');
@@ -78,15 +80,20 @@ const checkValues = (timeZone, townName, chome, banchi, gou) => {
   });
   return undefinedInputs;
 }
-// 未入力項目をフィードバックする関数定義
-const showFeedback = (arr) => {
+// フィードバックメッセージ用の要素を作って返す関数定義
+const createFeedbackElement = (text) => {
+  const feedbackMessage = document.createElement('p');
+  feedbackMessage.textContent = text;
+  feedbackMessage.setAttribute('id', 'feedback-message');
+  feedbackMessage.classList.add('feedback');
+  return feedbackMessage;
+};
+// フィードバックメッセージを表示する関数定義
+const showFeedbackMessage = (arr) => {
   if (arr.length > 0) {
     removeFeedbackMessage();
-    const feedbackMessage = document.createElement('p');
-    feedbackMessage.textContent = `${arr}を入力してください`;
-    feedbackMessage.setAttribute('id', 'feedback-message');
-    feedbackMessage.style.color = 'red';
-    addButton.insertAdjacentElement('afterend', feedbackMessage);
+    const feedbackElement = createFeedbackElement(`${arr}を入力してください`);
+    addButton.insertAdjacentElement('afterend', feedbackElement);
   }
 };
 // フィードバックメッセージがあれば削除する関数定義
@@ -105,11 +112,38 @@ const formatAddress = (timeZone, townName, chome, banchi, gou) => {
 };
 // 成形されたテキストを配達先リストの枠内に表示する関数定義
 const addFormattedAddress = (txt) => {
-  addressList.insertAdjacentHTML('beforeend', /* html */`<li>${txt}</li>`)
-};
-// チェックされたチェックボックスを取得する関数定義
-const getCheckedBox = () => {
+  // li要素づくり
+  const li = document.createElement('li');
+  // input[type='checkbox']要素づくり
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.name = 'added-address';
+  checkbox.classList.add('checkbox');
 
+  // li>inputの構造にする
+  li.appendChild(checkbox);
+  // liのテキストをtxtのものにする .textContentだと子要素を全部消してtxtのみに置き換わる  今回はinputを残したいので.createTextNodeを使用する
+  li.appendChild(document.createTextNode(txt));
+
+  // ol>liの構造にする
+  addressList.appendChild(li);
+};
+// チェックされた配達先を取得する関数定義
+const getCheckedboxes = () => {
+  return Array.from(getAddedAddress()).filter(li => {
+    const checkbox = li.querySelector('input[type="checkbox"]');
+    return checkbox && checkbox.checked
+  });
+};
+// チェックされた配達先を削除する関数定義
+const removeCheckedboxes = (arr) => {
+  arr.forEach((li) => {
+    li.remove();
+  });
+};
+// 配達先リストにある配達先を全て取得する関数定義
+const getAddedAddress = () => {
+  return addressList.children;
 };
 
 
@@ -130,8 +164,7 @@ townNameRadios.forEach((radio) => {
     labelForGou.classList.toggle('hidden', isOoazakashii);
   });
 });
-
-// 「配達先を追加」ボタンにクリックイベントリスナーをセット
+// 「配達先を追加」ボタンをクリックすると配達先リストに配達先を追加する
 addButton.addEventListener('click', (e) => {
   e.preventDefault();
   // 各ラジオボタン、入力欄の値を取得
@@ -141,10 +174,10 @@ addButton.addEventListener('click', (e) => {
   const banchiValue = getBanchiValue();
   const gouValue = getGouValue();
   // 項目の未入力がないかを調べる
-  const checkedValues = checkValues(timeZoneValue, townNameValue, chomeValue, banchiValue, gouValue);
+  const missingFields = getMissingFields(timeZoneValue, townNameValue, chomeValue, banchiValue, gouValue);
   // 未入力項目をフィードバックする
-  if (checkedValues.length) {
-    showFeedback(checkedValues);
+  if (missingFields.length) {
+    showFeedbackMessage(missingFields);
   } else { // 全部入力済みなら
     // 値に応じてテキストを成形する
     const formattedTimeZoneAddress = formatAddress(timeZoneValue, townNameValue, chomeValue, banchiValue, gouValue);
@@ -154,5 +187,28 @@ addButton.addEventListener('click', (e) => {
     removeFeedbackMessage();
     // フォームの入力をリセットする
     form.reset();
+  }
+});
+// 「配達先を削除」ボタンを押すと選択された配達先を削除する
+removeButton.addEventListener('click', (e) => {
+  e.preventDefault;
+  const checkedboxes = getCheckedboxes();
+  removeCheckedboxes(checkedboxes);
+});
+// 「ルート生成」ボタンへのイベントリスナー
+generateRouteButton.addEventListener('click', async (e) => {
+  e.preventDefault();
+  // GeocodingAPIに関するコード
+  const addresses = Array.from(getAddedAddress()).map(v => v.textContent.slice(7));
+
+  for (const address of addresses) {
+    try {
+      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`);
+      const data = await res.json();
+      console.log(address, data); // 住所ごとの結果を確認
+      // 必要に応じて data を配列やオブジェクトに格納
+    } catch (err) {
+      console.error(address, err);
+    }
   }
 });
