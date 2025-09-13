@@ -52,6 +52,11 @@
       <legend>配達先リスト</legend>
       <ol id="address-lists">
         <!-- ここにはJSにより動的にli>inputが入ります -->
+        <!-- 開発用の入力サンプル　ここから -->
+        <li><input type="checkbox" name="added-address" class="checkbox">18-20: 福岡県福岡市東区香椎駅前1丁目11-1</li>
+        <li><input type="checkbox" name="added-address" class="checkbox">19-21: 福岡県福岡市東区香椎1丁目1-1</li>
+        <li><input type="checkbox" name="added-address" class="checkbox">19-21: 福岡県福岡市東区香椎駅東2丁目22-1</li>
+        <!-- ここまで -->
       </ol>
       <button type="button" id="remove-address">配達先を削除</button>
     </fieldset>
@@ -76,6 +81,7 @@
 
 
   <script type="module" src="/src/main.js"></script>
+
 </body>
 
 </html>

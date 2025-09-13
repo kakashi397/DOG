@@ -147,6 +147,7 @@ const getAddedAddress = () => {
 };
 
 
+
 /* ---------
 イベントリスナー
 ---------- */
@@ -195,8 +196,19 @@ removeButton.addEventListener('click', (e) => {
   removeCheckedboxes(checkedboxes);
 });
 // 「ルート生成」ボタンへのイベントリスナー
-generateRouteButton.addEventListener('click', (e) => {
+generateRouteButton.addEventListener('click', async (e) => {
   e.preventDefault();
-  const checkedboxes = getCheckedboxes();
-  removeCheckedboxes(checkedboxes);
+  // GeocodingAPIに関するコード
+  const addresses = Array.from(getAddedAddress()).map(v => v.textContent.slice(7));
+
+  for (const address of addresses) {
+    try {
+      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=REDACTED`);
+      const data = await res.json();
+      console.log(address, data); // 住所ごとの結果を確認
+      // 必要に応じて data を配列やオブジェクトに格納
+    } catch (err) {
+      console.error(address, err);
+    }
+  }
 });
