@@ -2,6 +2,20 @@ import 'normalize.css';
 import './styles/main.scss';
 
 /* ---------
+変数宣言
+---------- */
+const postOfficeLatLng = {
+  'waypoint': {
+    'location': {
+      'latLng': {
+        'latitude': 33.65341086805036,
+        'longitude': 130.43435231268512,
+      }
+    }
+  }
+};
+
+/* ---------
 取得
 ---------- */
 // form全体を取得(id名から取得)
@@ -149,19 +163,36 @@ const getAddedAddress = () => {
 const getAddressTexts = () => {
   return Array.from(getAddedAddress()).map(v => v.textContent.slice(7))
 };
-// addressTextの配列を一件ずつGeocodingAPIへ送る関数定義
-const sendToGeocodingApi =async (addressTexts) => {
+// addressTextの配列を一件ずつGeocodingAPIへ送りRouteMatrixAPIが求めるJSON形式で返す関数定義
+const sendToGeocodingApi = async (addressTexts) => {
+  const destinations = [];
   for (const addressText of addressTexts) {
     try {
       const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressText)}&key=${apiKey}`);
       const data = await res.json();
-      console.log(addressText, data); // 住所ごとの結果を確認
-      // 必要に応じて data を配列やオブジェクトに格納
+      destinations.push({
+        'waypoint': {
+          'location': {
+            'latLng': {
+              'latitude': data.results[0].geometry.location.lat,
+              'longitude': data.results[0].geometry.location.lng
+            }
+          }
+        }
+      });
     } catch (err) {
-      console.error(addressText, err);
+      console.error(addressTexts, err);
     }
   }
+  console.log(destinations);
+  return destinations;
 };
+// // destinationsの先頭にpostOfficeLatLngを挿入する関数定義
+// const createOrigins = (destinations, postOfficeLatLng) => {
+//   return [postOfficeLatLng, ...destinations];
+// };
+
+
 
 
 /* ---------
