@@ -145,7 +145,23 @@ const removeCheckedboxes = (arr) => {
 const getAddedAddress = () => {
   return addressList.children;
 };
-
+// 配達先リストにある配達先から住所部分のみを切りだし配列を作る関数定義
+const getAddressTexts = () => {
+  return Array.from(getAddedAddress()).map(v => v.textContent.slice(7))
+};
+// addressTextの配列を一件ずつGeocodingAPIへ送る関数定義
+const sendToGeocodingApi =async (addressTexts) => {
+  for (const addressText of addressTexts) {
+    try {
+      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressText)}&key=${apiKey}`);
+      const data = await res.json();
+      console.log(addressText, data); // 住所ごとの結果を確認
+      // 必要に応じて data を配列やオブジェクトに格納
+    } catch (err) {
+      console.error(addressText, err);
+    }
+  }
+};
 
 
 /* ---------
@@ -196,19 +212,9 @@ removeButton.addEventListener('click', (e) => {
   removeCheckedboxes(checkedboxes);
 });
 // 「ルート生成」ボタンへのイベントリスナー
-generateRouteButton.addEventListener('click', async (e) => {
+generateRouteButton.addEventListener('click', (e) => {
   e.preventDefault();
   // GeocodingAPIに関するコード
-  const addresses = Array.from(getAddedAddress()).map(v => v.textContent.slice(7));
-
-  for (const address of addresses) {
-    try {
-      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`);
-      const data = await res.json();
-      console.log(address, data); // 住所ごとの結果を確認
-      // 必要に応じて data を配列やオブジェクトに格納
-    } catch (err) {
-      console.error(address, err);
-    }
-  }
+  const adressTexts = getAddressTexts();
+  sendToGeocodingApi(adressTexts);
 });
