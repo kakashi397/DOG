@@ -2,6 +2,20 @@ import 'normalize.css';
 import './styles/main.scss';
 
 /* ---------
+変数宣言
+---------- */
+const postOfficeLatLng = {
+  'waypoint': {
+    'location': {
+      'latLng': {
+        'latitude': 33.65341086805036,
+        'longitude': 130.43435231268512,
+      }
+    }
+  }
+};
+
+/* ---------
 取得
 ---------- */
 // form全体を取得(id名から取得)
@@ -145,6 +159,38 @@ const removeCheckedboxes = (arr) => {
 const getAddedAddress = () => {
   return addressList.children;
 };
+// 配達先リストにある配達先から住所部分のみを切りだし配列を作る関数定義
+const getAddressTexts = () => {
+  return Array.from(getAddedAddress()).map(v => v.textContent.slice(7))
+};
+// addressTextの配列を一件ずつGeocodingAPIへ送りRouteMatrixAPIが求めるJSON形式で返す関数定義
+const sendToGeocodingApi = async (addressTexts) => {
+  const destinations = [];
+  for (const addressText of addressTexts) {
+    try {
+      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressText)}&key=${apiKey}`);
+      const data = await res.json();
+      destinations.push({
+        'waypoint': {
+          'location': {
+            'latLng': {
+              'latitude': data.results[0].geometry.location.lat,
+              'longitude': data.results[0].geometry.location.lng
+            }
+          }
+        }
+      });
+    } catch (err) {
+      console.error(addressTexts, err);
+    }
+  }
+  return destinations;
+};
+// destinationsの先頭にpostOfficeLatLngを挿入する関数定義
+const createOrigins = (destinations) => {
+  const origins = [postOfficeLatLng, ...destinations];
+  return origins;
+};
 
 
 
@@ -199,16 +245,30 @@ removeButton.addEventListener('click', (e) => {
 generateRouteButton.addEventListener('click', async (e) => {
   e.preventDefault();
   // GeocodingAPIに関するコード
-  const addresses = Array.from(getAddedAddress()).map(v => v.textContent.slice(7));
-
-  for (const address of addresses) {
-    try {
-      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`);
-      const data = await res.json();
-      console.log(address, data); // 住所ごとの結果を確認
-      // 必要に応じて data を配列やオブジェクトに格納
-    } catch (err) {
-      console.error(address, err);
-    }
-  }
+  const adressTexts = getAddressTexts();
+  const destinations = await sendToGeocodingApi(adressTexts);
+  const origins = createOrigins(destinations);
+  console.log({origins, destinations});
+  return {origins, destinations};
 });
+
+
+
+/* ペイロードは時間帯別に作る必要がある（現在は全部一緒くたになってる）
+19～21時のペイロードは1820の最後の配達先が必要になる */
+
+
+
+// // ペイロード
+// {
+//   "origins": [
+//     {
+      
+//     }
+//   ],
+//   "destinations": [
+//     {
+      
+//     }
+//   ],
+// }
