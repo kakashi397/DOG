@@ -184,14 +184,13 @@ const sendToGeocodingApi = async (addressTexts) => {
       console.error(addressTexts, err);
     }
   }
-  console.log(destinations);
   return destinations;
 };
-// // destinationsの先頭にpostOfficeLatLngを挿入する関数定義
-// const createOrigins = (destinations, postOfficeLatLng) => {
-//   return [postOfficeLatLng, ...destinations];
-// };
-
+// destinationsの先頭にpostOfficeLatLngを挿入する関数定義
+const createOrigins = (destinations) => {
+  const origins = [postOfficeLatLng, ...destinations];
+  return origins;
+};
 
 
 
@@ -243,9 +242,33 @@ removeButton.addEventListener('click', (e) => {
   removeCheckedboxes(checkedboxes);
 });
 // 「ルート生成」ボタンへのイベントリスナー
-generateRouteButton.addEventListener('click', (e) => {
+generateRouteButton.addEventListener('click', async (e) => {
   e.preventDefault();
   // GeocodingAPIに関するコード
   const adressTexts = getAddressTexts();
-  sendToGeocodingApi(adressTexts);
+  const destinations = await sendToGeocodingApi(adressTexts);
+  const origins = createOrigins(destinations);
+  console.log({origins, destinations});
+  return {origins, destinations};
 });
+
+
+
+/* ペイロードは時間帯別に作る必要がある（現在は全部一緒くたになってる）
+19～21時のペイロードは1820の最後の配達先が必要になる */
+
+
+
+// // ペイロード
+// {
+//   "origins": [
+//     {
+      
+//     }
+//   ],
+//   "destinations": [
+//     {
+      
+//     }
+//   ],
+// }
