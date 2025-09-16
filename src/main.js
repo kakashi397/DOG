@@ -20,8 +20,8 @@ const postOfficeLatLng = {
 ---------- */
 // form全体を取得(id名から取得)
 const form = document.forms['form'];
-// time-zoneラジオボタンを取得する
-const timeZoneRadios = form.elements['time-zone'];
+// time-slotラジオボタンを取得する
+const timeSlotRadios = form.elements['time-slot'];
 // town-nameラジオボタンを取得する
 const townNameRadios = form.elements['town-name'];
 // chomeインプットを取得する
@@ -48,9 +48,9 @@ const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 /* ----------
 関数定義
 ---------- */
-// 選ばれたtime-zoneを取得して返す関数定義
-const getTimeZoneValue = () => {
-  return timeZoneRadios.value;
+// 選ばれたtime-slotを取得して返す関数定義
+const getTimeSlotValue = () => {
+  return timeSlotRadios.value;
 };
 // 選ばれたtown-nameを取得して返す関数定義
 const getTownNameValue = () => {
@@ -69,9 +69,9 @@ const getGouValue = () => {
   return gou.value;
 };
 // 項目の未入力がないかを調べ、配列にして返す関数定義
-const getMissingFields = (timeZone, townName, chome, banchi, gou) => {
+const getMissingFields = (timeSlot, townName, chome, banchi, gou) => {
   const undefinedInputs = [];
-  if (!timeZone) {
+  if (!timeSlot) {
     undefinedInputs.push('時間帯');
   }
   if (!townName) {
@@ -117,11 +117,11 @@ const removeFeedbackMessage = () => {
   }
 };
 // 入力された値に応じて時間帯と住所のテキストを成形する関数定義
-const formatAddress = (timeZone, townName, chome, banchi, gou) => {
+const formatAddress = (timeSlot, townName, chome, banchi, gou) => {
   if (townName === '大字香椎') {
-    return `${timeZone}: 福岡県福岡市東区${townName}${banchi}番地`
+    return `${timeSlot}: 福岡県福岡市東区${townName}${banchi}番地`
   } else {
-    return `${timeZone}: 福岡県福岡市東区${townName}${chome}丁目${banchi}-${gou}`
+    return `${timeSlot}: 福岡県福岡市東区${townName}${chome}丁目${banchi}-${gou}`
   }
 };
 // 成形されたテキストを配達先リストの枠内に表示する関数定義
@@ -142,6 +142,10 @@ const addFormattedAddress = (txt) => {
   // ol>liの構造にする
   addressList.appendChild(li);
 };
+// 配達先リストにある配達先を全て取得する関数定義
+const getAddedAddress = () => {
+  return addressList.children;
+};
 // チェックされた配達先を取得する関数定義
 const getCheckedboxes = () => {
   return Array.from(getAddedAddress()).filter(li => {
@@ -154,16 +158,28 @@ const removeCheckedboxes = (arr) => {
   arr.forEach((li) => {
     li.remove();
   });
+}; 
+// 配達先リスト内の配達先を時間帯ごとに振り分け、配列にしたオブジェクトで返す関数定義
+const groupByTimeSlot = () => {
+  const timeSlots = {'18-20': [], '19-21': []};
+  // オブジェクトが持つキーを値として持つ配列を作れるメソッド
+  const labels = Object.keys(timeSlots);
+  const addedAddress = Array.from(getAddedAddress());
+  
+  // forEachが二重構造になっているので注意
+  addedAddress.forEach((v) => { //これはli要素ごと
+    labels.forEach((label) => { // これは時間帯ごと
+      if (v.textContent.includes(label)) {
+        timeSlots[label].push(v.textContent.slice(7));
+      }
+    });
+  });
+  return timeSlots;
 };
-// 配達先リストにある配達先を全て取得する関数定義
-const getAddedAddress = () => {
-  return addressList.children;
-};
-// 配達先リストにある配達先から住所部分のみを切りだし配列を作る関数定義
-const getAddressTexts = () => {
-  return Array.from(getAddedAddress()).map(v => v.textContent.slice(7))
-};
+//  groupByTimeSlot()をsendToGeocodingApi()で使うことになる
+
 // addressTextの配列を一件ずつGeocodingAPIへ送りRouteMatrixAPIが求めるJSON形式で返す関数定義
+// この関数は時間帯ごとに行われるように改修する必要がある
 const sendToGeocodingApi = async (addressTexts) => {
   const destinations = [];
   for (const addressText of addressTexts) {
@@ -214,21 +230,21 @@ townNameRadios.forEach((radio) => {
 addButton.addEventListener('click', (e) => {
   e.preventDefault();
   // 各ラジオボタン、入力欄の値を取得
-  const timeZoneValue = getTimeZoneValue();
+  const timeSlotValue = getTimeSlotValue();
   const townNameValue = getTownNameValue();
   const chomeValue = getChomeValue();
   const banchiValue = getBanchiValue();
   const gouValue = getGouValue();
   // 項目の未入力がないかを調べる
-  const missingFields = getMissingFields(timeZoneValue, townNameValue, chomeValue, banchiValue, gouValue);
+  const missingFields = getMissingFields(timeSlotValue, townNameValue, chomeValue, banchiValue, gouValue);
   // 未入力項目をフィードバックする
   if (missingFields.length) {
     showFeedbackMessage(missingFields);
   } else { // 全部入力済みなら
     // 値に応じてテキストを成形する
-    const formattedTimeZoneAddress = formatAddress(timeZoneValue, townNameValue, chomeValue, banchiValue, gouValue);
+    const formattedTimeSlotAddress = formatAddress(timeSlotValue, townNameValue, chomeValue, banchiValue, gouValue);
     // 成形されたテキストを配達先リストに送る
-    addFormattedAddress(formattedTimeZoneAddress);
+    addFormattedAddress(formattedTimeSlotAddress);
     // フィードバックが残っていれば削除する
     removeFeedbackMessage();
     // フォームの入力をリセットする
@@ -245,7 +261,7 @@ removeButton.addEventListener('click', (e) => {
 generateRouteButton.addEventListener('click', async (e) => {
   e.preventDefault();
   // GeocodingAPIに関するコード
-  const adressTexts = getAddressTexts();
+  const timeSlots = groupByTimeSlot();
   const destinations = await sendToGeocodingApi(adressTexts);
   const origins = createOrigins(destinations);
   console.log({origins, destinations});
