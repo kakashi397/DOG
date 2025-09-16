@@ -162,19 +162,20 @@ const removeCheckedboxes = (arr) => {
 // 配達先リスト内の配達先を時間帯ごとに振り分け、配列にしたオブジェクトで返す関数定義
 const groupByTimeSlot = () => {
   const timeSlots = {'18-20': [], '19-21': []};
+  // オブジェクトが持つキーを値として持つ配列を作れるメソッド
+  const labels = Object.keys(timeSlots);
   const addedAddress = Array.from(getAddedAddress());
-  addedAddress.forEach((v) => {
-    if (v.textContent.includes('18-20')) {
-      timeSlots['18-20'].push(v.textContent.slice(7));
-    }
-    if (v.textContent.includes('19-21')) {
-      timeSlots['19-21'].push(v.textContent.slice(7));
-    }
+  
+  // forEachが二重構造になっているので注意
+  addedAddress.forEach((v) => { //これはli要素ごと
+    labels.forEach((label) => { // これは時間帯ごと
+      if (v.textContent.includes(label)) {
+        timeSlots[label].push(v.textContent.slice(7));
+      }
+    });
   });
   return timeSlots;
 };
-console.log(groupByTimeSlot());
-
 //  groupByTimeSlot()をsendToGeocodingApi()で使うことになる
 
 // addressTextの配列を一件ずつGeocodingAPIへ送りRouteMatrixAPIが求めるJSON形式で返す関数定義
