@@ -159,31 +159,26 @@ const removeCheckedboxes = (arr) => {
     li.remove();
   });
 }; 
-// 配達先リスト内の配達先を時間帯ごとに振り分ける関数定義
+// 配達先リスト内の配達先を時間帯ごとに振り分け、配列にしたオブジェクトで返す関数定義
 const groupByTimeSlot = () => {
   const timeSlots = {'18-20': [], '19-21': []};
-  const addedAddress = getAddedAddress();
-  addedAddress.forEach(() => {
-
+  const addedAddress = Array.from(getAddedAddress());
+  addedAddress.forEach((v) => {
+    if (v.textContent.includes('18-20')) {
+      timeSlots['18-20'].push(v.textContent.slice(7));
+    }
+    if (v.textContent.includes('19-21')) {
+      timeSlots['19-21'].push(v.textContent.slice(7));
+    }
   });
   return timeSlots;
 };
 console.log(groupByTimeSlot());
 
+//  groupByTimeSlot()をsendToGeocodingApi()で使うことになる
 
-
-// ここに時間帯ごとに配達先リストを振り分ける機能が必要 
-
-
-
-
-
-
-// 配達先リストにある配達先から住所部分のみを切りだし配列を作る関数定義
-const getAddressTexts = () => {
-  return Array.from(getAddedAddress()).map(v => v.textContent.slice(7))
-};
 // addressTextの配列を一件ずつGeocodingAPIへ送りRouteMatrixAPIが求めるJSON形式で返す関数定義
+// この関数は時間帯ごとに行われるように改修する必要がある
 const sendToGeocodingApi = async (addressTexts) => {
   const destinations = [];
   for (const addressText of addressTexts) {
@@ -265,7 +260,7 @@ removeButton.addEventListener('click', (e) => {
 generateRouteButton.addEventListener('click', async (e) => {
   e.preventDefault();
   // GeocodingAPIに関するコード
-  const adressTexts = getAddressTexts();
+  const timeSlots = groupByTimeSlot();
   const destinations = await sendToGeocodingApi(adressTexts);
   const origins = createOrigins(destinations);
   console.log({origins, destinations});
