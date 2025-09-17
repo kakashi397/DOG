@@ -176,32 +176,53 @@ const groupByTimeSlot = () => {
   });
   return timeSlots;
 };
-//  groupByTimeSlot()をsendToGeocodingApi()で使うことになる
-
 // addressTextの配列を一件ずつGeocodingAPIへ送りRouteMatrixAPIが求めるJSON形式で返す関数定義
-// この関数は時間帯ごとに行われるように改修する必要がある
-const sendToGeocodingApi = async (addressTexts) => {
-  const destinations = [];
-  for (const addressText of addressTexts) {
-    try {
-      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressText)}&key=${apiKey}`);
-      const data = await res.json();
-      destinations.push({
-        'waypoint': {
-          'location': {
-            'latLng': {
-              'latitude': data.results[0].geometry.location.lat,
-              'longitude': data.results[0].geometry.location.lng
+const sendToGeocodingApi = (timeSlots) => {
+  Object.values(timeSlots).forEach((timeSlot) => { // [[],[]]この外枠に対するforEach
+    for (const addressText of timeSlot) {
+      const destinations = [];
+      try {
+        const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressText)}&key=${apiKey}`);
+        const data = await res.json();
+        destinations.push({
+          'waypoint': {
+            'location': {
+              'latLng': {
+                'latitude': data.results[0].geometry.location.lat,
+                'longitude': data.results[0].geometry.location.lng 
+              }
             }
           }
-        }
-      });
-    } catch (err) {
-      console.error(addressTexts, err);
+        });
+      } catch (err) {
+        console.error(timeSlot, err);
+      }
+      return destinations;
     }
-  }
-  return destinations;
+  })
 };
+// const sendToGeocodingApi = async (addressTexts) => {
+//   const destinations = [];
+//   for (const addressText of addressTexts) {
+//     try {
+//       const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressText)}&key=${apiKey}`);
+//       const data = await res.json();
+//       destinations.push({
+//         'waypoint': {
+//           'location': {
+//             'latLng': {
+//               'latitude': data.results[0].geometry.location.lat,
+//               'longitude': data.results[0].geometry.location.lng
+//             }
+//           }
+//         }
+//       });
+//     } catch (err) {
+//       console.error(addressTexts, err);
+//     }
+//   }
+//   return destinations;
+// };
 // destinationsの先頭にpostOfficeLatLngを挿入する関数定義
 const createOrigins = (destinations) => {
   const origins = [postOfficeLatLng, ...destinations];
@@ -262,7 +283,7 @@ generateRouteButton.addEventListener('click', async (e) => {
   e.preventDefault();
   // GeocodingAPIに関するコード
   const timeSlots = groupByTimeSlot();
-  const destinations = await sendToGeocodingApi(adressTexts);
+  const destinations = sendToGeocodingApi(timeSlots['18-20']);
   const origins = createOrigins(destinations);
   console.log({origins, destinations});
   return {origins, destinations};
