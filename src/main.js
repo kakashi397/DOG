@@ -2,8 +2,9 @@ import 'normalize.css';
 import './styles/main.scss';
 
 /* ---------
-変数宣言
+定数・変数宣言
 ---------- */
+// 郵便局の座標を定数に代入しておく
 const postOfficeLatLng = {
   'waypoint': {
     'location': {
@@ -15,10 +16,12 @@ const postOfficeLatLng = {
   }
 };
 
+
+
 /* ---------
 取得
 ---------- */
-// form全体を取得(id名から取得)
+// form全体を取得(id名から取得)する
 const form = document.forms['form'];
 // time-slotラジオボタンを取得する
 const timeSlotRadios = form.elements['time-slot'];
@@ -34,16 +37,18 @@ const gou = form.elements['gou'];
 const labelForChome = document.querySelector('label[for="chome"]');
 // gouラベルを取得する
 const labelForGou = document.querySelector('label[for="gou"]');
-// 「配達先を追加」ボタンを取得
+// 「配達先を追加」ボタンを取得する
 const addButton = document.querySelector('#add-address');
-// 「配達先を削除」ボタンを取得
+// 「配達先を削除」ボタンを取得する
 const removeButton = document.querySelector('#remove-address');
-// 配達先リストの枠を取得
+// 「配達順生成」ボタンを取得する
+const generateOrderButton = document.querySelector('#generate-order');
+// 配達先リストの枠を取得する
 const addressList = document.querySelector('#address-lists');
-// 「ルート生成」ボタンを取得
-const generateRouteButton = document.querySelector('#generate-route');
 // GoogleMapsAPIキーを.envから取得する
 const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
+
 
 /* ----------
 関数定義
@@ -158,14 +163,14 @@ const removeCheckedboxes = (arr) => {
   arr.forEach((li) => {
     li.remove();
   });
-}; 
+};
 // 配達先リスト内の配達先を時間帯ごとに振り分け、配列にしたオブジェクトで返す関数定義
 const groupByTimeSlot = () => {
-  const timeSlots = {'18-20': [], '19-21': []};
+  const timeSlots = { '18-20': [], '19-21': [] };
   // オブジェクトが持つキーを値として持つ配列を作れるメソッド
   const labels = Object.keys(timeSlots);
   const addedAddress = Array.from(getAddedAddress());
-  
+
   // forEachが二重構造になっているので注意
   addedAddress.forEach((v) => { //これはli要素ごと
     labels.forEach((label) => { // これは時間帯ごと
@@ -176,57 +181,97 @@ const groupByTimeSlot = () => {
   });
   return timeSlots;
 };
-// addressTextの配列を一件ずつGeocodingAPIへ送りRouteMatrixAPIが求めるJSON形式で返す関数定義
-const sendToGeocodingApi = (timeSlots) => {
-  Object.values(timeSlots).forEach((timeSlot) => { // [[],[]]この外枠に対するforEach
-    for (const addressText of timeSlot) {
-      const destinations = [];
+// timeSlotsの値（配達先住所）を一件ずつGeocodingAPIへ送り変換された座標を再び時間帯ごとに配列にまとめたオブジェクトを返す関数定義
+const sendToGeocodingApi = async (timeSlots) => {
+  const result = {};
+
+  for (const [slot, addresses] of Object.entries(timeSlots)) {
+    const destinations = [];
+
+    for (const addressText of addresses) {
       try {
-        const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressText)}&key=${apiKey}`);
+        const res = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressText)}&key=${apiKey}`
+        );
         const data = await res.json();
+
         destinations.push({
-          'waypoint': {
-            'location': {
-              'latLng': {
-                'latitude': data.results[0].geometry.location.lat,
-                'longitude': data.results[0].geometry.location.lng 
-              }
-            }
-          }
+          waypoint: {
+            location: {
+              latLng: {
+                latitude: data.results[0].geometry.location.lat,
+                longitude: data.results[0].geometry.location.lng,
+              },
+            },
+          },
         });
       } catch (err) {
-        console.error(timeSlot, err);
+        console.error(slot, addressText, err);
       }
-      return destinations;
     }
-  })
+    result[slot] = destinations;
+  }
+  return result;
 };
-// const sendToGeocodingApi = async (addressTexts) => {
-//   const destinations = [];
-//   for (const addressText of addressTexts) {
-//     try {
-//       const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressText)}&key=${apiKey}`);
-//       const data = await res.json();
-//       destinations.push({
-//         'waypoint': {
-//           'location': {
-//             'latLng': {
-//               'latitude': data.results[0].geometry.location.lat,
-//               'longitude': data.results[0].geometry.location.lng
-//             }
-//           }
-//         }
-//       });
-//     } catch (err) {
-//       console.error(addressTexts, err);
-//     }
-//   }
-//   return destinations;
-// };
+/* 9月18日　このコードはsendsendToGeocodingApi()の債務の分離を意識したもの　後々可能ならば続きを完成させるが、一旦プロジェクト全体を先に進めることにする。
+
+const sendToGeocodingApi = async (timeSlots) => {
+  const result = [];
+  for (const addresses of Object.values(timeSlots) ) {
+    for (const addressText of addresses) {
+      try {
+        const res = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressText)}&key=${apiKey}`
+        );
+        const data = await res.json();
+        result.push(data);
+      } catch (err) {
+        console.error(addressText, err);
+      }
+    }
+  }
+  console.log(result);
+  
+  return result;
+}; */
+
+// 18-20時のslotを作る関数定義
+const createSlot1820 = (result) => {
+  return Array.from(result['18-20']);
+};
+// 19-21時のslotを作る関数定義
+const createSlot1921 = (result) => {
+  return Array.from(result['19-21']);
+};
 // destinationsの先頭にpostOfficeLatLngを挿入する関数定義
-const createOrigins = (destinations) => {
-  const origins = [postOfficeLatLng, ...destinations];
+const createOrigins = (slot1820) => {
+  const origins = [postOfficeLatLng, ...slot1820];
   return origins;
+};
+// ペイロードを作る関数定義
+const createPayload = (origins, destinations) => {
+  const body = {
+    origins: origins,
+    destinations: destinations,
+  };
+  const payload = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': apiKey,
+      'X-Goog-FieldMask': 'originIndex,destinationIndex,status,distanceMeters,duration',
+    },
+    body: JSON.stringify(body), // ここでbodyオブジェクトをJSONに変換してる
+  };
+  return payload;
+};
+// ペイロードをCompute Route Matrix APIに送り、各配達先間の時間と距離を得る関数定義
+const sendToComputeRouteMatrixApi = async (payload) => {
+  const res = await fetch(
+    'https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix', payload
+  );
+  const data = await res.json();
+  return data;
 };
 
 
@@ -278,34 +323,19 @@ removeButton.addEventListener('click', (e) => {
   const checkedboxes = getCheckedboxes();
   removeCheckedboxes(checkedboxes);
 });
-// 「ルート生成」ボタンへのイベントリスナー
-generateRouteButton.addEventListener('click', async (e) => {
+// 「配達順生成」ボタンへのイベントリスナー
+generateOrderButton.addEventListener('click', async (e) => {
   e.preventDefault();
-  // GeocodingAPIに関するコード
+  // GeocodingAPIに関する処理
   const timeSlots = groupByTimeSlot();
-  const destinations = sendToGeocodingApi(timeSlots['18-20']);
-  const origins = createOrigins(destinations);
-  console.log({origins, destinations});
-  return {origins, destinations};
+  const result = await sendToGeocodingApi(timeSlots);
+  // RouteMatrixAPIに向けてデータを成形していく
+  const destinations1820 = createSlot1820(result);
+  const slot1921 = createSlot1921(result);
+  const origins1820 = createOrigins(destinations1820);
+  const payload1820 = createPayload(origins1820, destinations1820);
+  // RouteMatrixAPIを叩く
+  const data = await sendToComputeRouteMatrixApi(payload1820);
+
+  console.log(data);
 });
-
-
-
-/* ペイロードは時間帯別に作る必要がある（現在は全部一緒くたになってる）
-19～21時のペイロードは1820の最後の配達先が必要になる */
-
-
-
-// // ペイロード
-// {
-//   "origins": [
-//     {
-      
-//     }
-//   ],
-//   "destinations": [
-//     {
-      
-//     }
-//   ],
-// }
