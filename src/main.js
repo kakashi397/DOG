@@ -2,8 +2,9 @@ import 'normalize.css';
 import './styles/main.scss';
 
 /* ---------
-変数宣言
+定数・変数宣言
 ---------- */
+// 郵便局の座標を定数に代入しておく
 const postOfficeLatLng = {
   'waypoint': {
     'location': {
@@ -15,10 +16,12 @@ const postOfficeLatLng = {
   }
 };
 
+
+
 /* ---------
 取得
 ---------- */
-// form全体を取得(id名から取得)
+// form全体を取得(id名から取得)する
 const form = document.forms['form'];
 // time-slotラジオボタンを取得する
 const timeSlotRadios = form.elements['time-slot'];
@@ -34,16 +37,18 @@ const gou = form.elements['gou'];
 const labelForChome = document.querySelector('label[for="chome"]');
 // gouラベルを取得する
 const labelForGou = document.querySelector('label[for="gou"]');
-// 「配達先を追加」ボタンを取得
+// 「配達先を追加」ボタンを取得する
 const addButton = document.querySelector('#add-address');
-// 「配達先を削除」ボタンを取得
+// 「配達先を削除」ボタンを取得する
 const removeButton = document.querySelector('#remove-address');
-// 配達先リストの枠を取得
+// 「配達順生成」ボタンを取得する
+const generateOrderButton = document.querySelector('#generate-order');
+// 配達先リストの枠を取得する
 const addressList = document.querySelector('#address-lists');
-// 「ルート生成」ボタンを取得
-const generateRouteButton = document.querySelector('#generate-route');
 // GoogleMapsAPIキーを.envから取得する
 const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
+
 
 /* ----------
 関数定義
@@ -177,52 +182,37 @@ const groupByTimeSlot = () => {
   return timeSlots;
 };
 // addressTextの配列を一件ずつGeocodingAPIへ送りRouteMatrixAPIが求めるJSON形式で返す関数定義
-const sendToGeocodingApi = (timeSlots) => {
-  Object.values(timeSlots).forEach((timeSlot) => { // [[],[]]この外枠に対するforEach
-    for (const addressText of timeSlot) {
-      const destinations = [];
+const sendToGeocodingApi = async (timeSlots) => {
+  const result = {};
+
+  for(const [slot, addresses] of Object.entries(timeSlots)) {
+    const destinations = [];
+
+    for(const addressText of addresses) {
       try {
-        const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressText)}&key=${apiKey}`);
+        const res = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressText)}&key=${apiKey}`
+        );
         const data = await res.json();
+
         destinations.push({
-          'waypoint': {
-            'location': {
-              'latLng': {
-                'latitude': data.results[0].geometry.location.lat,
-                'longitude': data.results[0].geometry.location.lng 
-              }
-            }
-          }
+          waypoint: {
+            location: {
+              latLng: {
+                latitude: data.results[0].geometry.location.lat,
+                longitude: data.results[0].geometry.location.lng,
+              },
+            },
+          },
         });
       } catch (err) {
-        console.error(timeSlot, err);
+        console.error(slot, addressText, err);
       }
-      return destinations;
     }
-  })
+    result[slot] = destinations;
+  }
+  return result;
 };
-// const sendToGeocodingApi = async (addressTexts) => {
-//   const destinations = [];
-//   for (const addressText of addressTexts) {
-//     try {
-//       const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressText)}&key=${apiKey}`);
-//       const data = await res.json();
-//       destinations.push({
-//         'waypoint': {
-//           'location': {
-//             'latLng': {
-//               'latitude': data.results[0].geometry.location.lat,
-//               'longitude': data.results[0].geometry.location.lng
-//             }
-//           }
-//         }
-//       });
-//     } catch (err) {
-//       console.error(addressTexts, err);
-//     }
-//   }
-//   return destinations;
-// };
 // destinationsの先頭にpostOfficeLatLngを挿入する関数定義
 const createOrigins = (destinations) => {
   const origins = [postOfficeLatLng, ...destinations];
@@ -278,15 +268,16 @@ removeButton.addEventListener('click', (e) => {
   const checkedboxes = getCheckedboxes();
   removeCheckedboxes(checkedboxes);
 });
-// 「ルート生成」ボタンへのイベントリスナー
-generateRouteButton.addEventListener('click', async (e) => {
+// 「配達順生成」ボタンへのイベントリスナー
+generateOrderButton.addEventListener('click', async (e) => {
   e.preventDefault();
   // GeocodingAPIに関するコード
   const timeSlots = groupByTimeSlot();
-  const destinations = sendToGeocodingApi(timeSlots['18-20']);
-  const origins = createOrigins(destinations);
-  console.log({origins, destinations});
-  return {origins, destinations};
+  const result = await sendToGeocodingApi(timeSlots);
+  const slot1820 = Array.from(result['18-20']);
+  const slot1920 = Array.from(result['19-21']);
+  const origins = createOrigins(slot1820);
+  console.log(origins);
 });
 
 
