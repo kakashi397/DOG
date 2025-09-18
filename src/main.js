@@ -261,7 +261,7 @@ const createPayload = (origins, destinations) => {
       'X-Goog-Api-Key': apiKey,
       'X-Goog-FieldMask': 'originIndex,destinationIndex,status,distanceMeters,duration',
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify(body), // ここでbodyオブジェクトをJSONに変換してる
   };
   return payload;
 };
@@ -326,13 +326,15 @@ removeButton.addEventListener('click', (e) => {
 // 「配達順生成」ボタンへのイベントリスナー
 generateOrderButton.addEventListener('click', async (e) => {
   e.preventDefault();
-  // GeocodingAPIに関するコード
+  // GeocodingAPIに関する処理
   const timeSlots = groupByTimeSlot();
   const result = await sendToGeocodingApi(timeSlots);
+  // RouteMatrixAPIに向けてデータを成形していく
   const destinations1820 = createSlot1820(result);
   const slot1921 = createSlot1921(result);
   const origins1820 = createOrigins(destinations1820);
   const payload1820 = createPayload(origins1820, destinations1820);
+  // RouteMatrixAPIを叩く
   const data = await sendToComputeRouteMatrixApi(payload1820);
 
   console.log(data);
