@@ -181,7 +181,7 @@ const groupByTimeSlot = () => {
   });
   return timeSlots;
 };
-// addressTextの配列を一件ずつGeocodingAPIへ送りRouteMatrixAPIが求めるJSON形式で返す関数定義
+// timeSlotsの値（配達先住所）を一件ずつGeocodingAPIへ送り変換された座標を再び時間帯ごとに配列にまとめたオブジェクトを返す関数定義
 const sendToGeocodingApi = async (timeSlots) => {
   const result = {};
 
@@ -213,9 +213,39 @@ const sendToGeocodingApi = async (timeSlots) => {
   }
   return result;
 };
+/* 9月18日　このコードはsendsendToGeocodingApi()の債務の分離を意識したもの　後々可能ならば続きを完成させるが、一旦プロジェクト全体を先に進めることにする。
+
+const sendToGeocodingApi = async (timeSlots) => {
+  const result = [];
+  for (const addresses of Object.values(timeSlots) ) {
+    for (const addressText of addresses) {
+      try {
+        const res = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressText)}&key=${apiKey}`
+        );
+        const data = await res.json();
+        result.push(data);
+      } catch (err) {
+        console.error(addressText, err);
+      }
+    }
+  }
+  console.log(result);
+  
+  return result;
+}; */
+
+// 18-20時のslotを作る関数定義
+const createSlot1820 = (result) => {
+  return Array.from(result['18-20']);
+};
+// 19-21時のslotを作る関数定義
+const createSlot1921 = (result) => {
+  return Array.from(result['19-21']);
+};
 // destinationsの先頭にpostOfficeLatLngを挿入する関数定義
-const createOrigins = (destinations) => {
-  const origins = [postOfficeLatLng, ...destinations];
+const createOrigins = (slot1820) => {
+  const origins = [postOfficeLatLng, ...slot1820];
   return origins;
 };
 
@@ -274,10 +304,12 @@ generateOrderButton.addEventListener('click', async (e) => {
   // GeocodingAPIに関するコード
   const timeSlots = groupByTimeSlot();
   const result = await sendToGeocodingApi(timeSlots);
-  const slot1820 = Array.from(result['18-20']);
-  const slot1920 = Array.from(result['19-21']);
+  const slot1820 = createSlot1820(result);
+  const slot1920 = createSlot1921(result);
   const origins = createOrigins(slot1820);
+
   console.log(origins);
+  console.log(slot1920);
 });
 
 
