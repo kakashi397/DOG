@@ -163,14 +163,14 @@ const removeCheckedboxes = (arr) => {
   arr.forEach((li) => {
     li.remove();
   });
-}; 
+};
 // 配達先リスト内の配達先を時間帯ごとに振り分け、配列にしたオブジェクトで返す関数定義
 const groupByTimeSlot = () => {
-  const timeSlots = {'18-20': [], '19-21': []};
+  const timeSlots = { '18-20': [], '19-21': [] };
   // オブジェクトが持つキーを値として持つ配列を作れるメソッド
   const labels = Object.keys(timeSlots);
   const addedAddress = Array.from(getAddedAddress());
-  
+
   // forEachが二重構造になっているので注意
   addedAddress.forEach((v) => { //これはli要素ごと
     labels.forEach((label) => { // これは時間帯ごと
@@ -185,10 +185,10 @@ const groupByTimeSlot = () => {
 const sendToGeocodingApi = async (timeSlots) => {
   const result = {};
 
-  for(const [slot, addresses] of Object.entries(timeSlots)) {
+  for (const [slot, addresses] of Object.entries(timeSlots)) {
     const destinations = [];
 
-    for(const addressText of addresses) {
+    for (const addressText of addresses) {
       try {
         const res = await fetch(
           `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressText)}&key=${apiKey}`
@@ -248,6 +248,31 @@ const createOrigins = (slot1820) => {
   const origins = [postOfficeLatLng, ...slot1820];
   return origins;
 };
+// ペイロードを作る関数定義
+const createPayload = (origins, destinations) => {
+  const body = {
+    origins: origins,
+    destinations: destinations,
+  };
+  const payload = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': apiKey,
+      'X-Goog-FieldMask': 'originIndex,destinationIndex,status,distanceMeters,duration',
+    },
+    body: JSON.stringify(body),
+  };
+  return payload;
+};
+// ペイロードをCompute Route Matrix APIに送り、各配達先間の時間と距離を得る関数定義
+const sendToComputeRouteMatrixApi = async (payload) => {
+  const res = await fetch(
+    'https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix', payload
+  );
+  const data = await res.json();
+  return data;
+};
 
 
 
@@ -304,31 +329,11 @@ generateOrderButton.addEventListener('click', async (e) => {
   // GeocodingAPIに関するコード
   const timeSlots = groupByTimeSlot();
   const result = await sendToGeocodingApi(timeSlots);
-  const slot1820 = createSlot1820(result);
-  const slot1920 = createSlot1921(result);
-  const origins = createOrigins(slot1820);
+  const destinations1820 = createSlot1820(result);
+  const slot1921 = createSlot1921(result);
+  const origins1820 = createOrigins(destinations1820);
+  const payload1820 = createPayload(origins1820, destinations1820);
+  const data = await sendToComputeRouteMatrixApi(payload1820);
 
-  console.log(origins);
-  console.log(slot1920);
+  console.log(data);
 });
-
-
-
-/* ペイロードは時間帯別に作る必要がある（現在は全部一緒くたになってる）
-19～21時のペイロードは1820の最後の配達先が必要になる */
-
-
-
-// // ペイロード
-// {
-//   "origins": [
-//     {
-      
-//     }
-//   ],
-//   "destinations": [
-//     {
-      
-//     }
-//   ],
-// }
