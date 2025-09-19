@@ -21,6 +21,8 @@ const postOfficeLatLng = {
 /* ---------
 取得
 ---------- */
+// GoogleMapsAPIキーを.envから取得する
+const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 // form全体を取得(id名から取得)する
 const form = document.forms['form'];
 // time-slotラジオボタンを取得する
@@ -45,8 +47,6 @@ const removeButton = document.querySelector('#remove-address');
 const generateOrderButton = document.querySelector('#generate-order');
 // 配達先リストの枠を取得する
 const addressList = document.querySelector('#address-lists');
-// GoogleMapsAPIキーを.envから取得する
-const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 
 
@@ -273,6 +273,14 @@ const sendToComputeRouteMatrixApi = async (payload) => {
   const data = await res.json();
   return data;
 };
+// RouteMatrixAPIのレスポンスから必要な情報のみを抽出したオブジェクトを作る関数定義
+const createRouteMatrixMap = (data) => {
+  const routeMatrixMap = new Map();
+  for (let index = 0; index < origins.length; index++) {
+    // routeMatrixMapにindexの数字を追加する処理  
+  }
+};
+
 
 
 
