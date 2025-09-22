@@ -273,13 +273,42 @@ const sendToComputeRouteMatrixApi = async (payload) => {
   const data = await res.json();
   return data;
 };
-// RouteMatrixAPIのレスポンスから必要な情報のみを抽出したオブジェクトを作る関数定義
+// RouteMatrixAPIのレスポンスから必要な情報のみを抽出したMapオブジェクトを作る関数定義
 const createRouteMatrixMap = (data) => {
-  const routeMatrixMap = new Map();
-  for (let index = 0; index < origins.length; index++) {
-    // routeMatrixMapにindexの数字を追加する処理  
+  const routeMatrixMap = new Map(); // Mapオブジェクトを採用
+  for (const row of data) {
+    if (routeMatrixMap.has(row.originIndex)) {
+      // originIndexのキーを既に持ってたら、その値にオブジェクト型でデータを渡す
+      routeMatrixMap.get(row.originIndex).push({destinationIndex: row.destinationIndex, duration: row.duration});
+    } else { // キーが無ければ作ってから、その値にオブジェクト型でデータを渡す
+      routeMatrixMap.set(row.originIndex, []);
+      routeMatrixMap.get(row.originIndex).push({destinationIndex: row.destinationIndex, duration: row.duration});
+    }
   }
+  return routeMatrixMap;
 };
+// Greedyアルゴリズムの関数定義
+const greedyAlgorithm = (routeMatrixMap) => {
+  // 郵便局の次の配達先に関する配列を取得
+  const destinations = routeMatrixMap.get(0);
+  // 訪問済みのdestinationを格納するSetを用意しておく
+  const visited = new Set();
+  // 現在のoriginを格納する変数を用紙しておく
+  let currentOrigin = 0;
+  // 最小のduration、最初の配達先を入れる変数を用意しておく
+  let minDuration = Infinity;
+  let firstDestination = null;
+  // 各destinationのdurationを比較していく
+  for (const destination of destinations) {
+    // RouteMatrixMapのdurationは'~~s'という文字列なのでsを''（空白でもない、無）に置き換え（要するにsを削除）してNumber型に変換する
+    const durationSec = Number(destination.duration.replace('s', ''));
+    if (durationSec < minDuration) {
+      minDuration = durationSec;
+      firstDestination = destination;
+    }
+  }
+  return firstDestination;
+}; 
 
 
 
@@ -344,6 +373,7 @@ generateOrderButton.addEventListener('click', async (e) => {
   const payload1820 = createPayload(origins1820, destinations1820);
   // RouteMatrixAPIを叩く
   const data = await sendToComputeRouteMatrixApi(payload1820);
-
-  console.log(data);
+  // RouteMatrixAPIで得られたdataをアルゴリズムに使うMapオブジェクトに変換する
+  const routeMatrixMap = createRouteMatrixMap(data);
+  greedyAlgorithm(routeMatrixMap);
 });
