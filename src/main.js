@@ -21,6 +21,8 @@ const postOfficeLatLng = {
 /* ---------
 取得
 ---------- */
+// GoogleMapsAPIキーを.envから取得する
+const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 // form全体を取得(id名から取得)する
 const form = document.forms['form'];
 // time-slotラジオボタンを取得する
@@ -45,8 +47,6 @@ const removeButton = document.querySelector('#remove-address');
 const generateOrderButton = document.querySelector('#generate-order');
 // 配達先リストの枠を取得する
 const addressList = document.querySelector('#address-lists');
-// GoogleMapsAPIキーを.envから取得する
-const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 
 
@@ -273,6 +273,62 @@ const sendToComputeRouteMatrixApi = async (payload) => {
   const data = await res.json();
   return data;
 };
+// RouteMatrixAPIのレスポンスから必要な情報のみを抽出したMapオブジェクトを作る関数定義
+const createRouteMatrixMap = (data) => {
+  const routeMatrixMap = new Map(); // Mapオブジェクトを採用
+  for (const row of data) {
+    if (routeMatrixMap.has(row.originIndex)) {
+      // originIndexのキーを既に持ってたら、その値にオブジェクト型でデータを渡す
+      routeMatrixMap.get(row.originIndex).push({ destinationIndex: row.destinationIndex, duration: row.duration });
+    } else { // キーが無ければ作ってから、その値にオブジェクト型でデータを渡す
+      routeMatrixMap.set(row.originIndex, []);
+      routeMatrixMap.get(row.originIndex).push({ destinationIndex: row.destinationIndex, duration: row.duration });
+    }
+  }
+  return routeMatrixMap;
+};
+// Greedyアルゴリズムの関数定義
+const greedyAlgorithm = (routeMatrixMap) => {
+  // 訪問済みのdestinationを格納するSetを用意しておく
+  const visited = new Set();
+  // 現在のoriginを格納する変数を用意しておく（最初は0つまり郵便局をセット済み）
+  let currentOrigin = 0;
+  // 郵便局を除いた（-1）RouteMatrixMapのsizeを取得する
+  const totalDestinations = routeMatrixMap.size - 1;
+  // 生成された配達順番を保持する配列
+  const order = [];
+  // すべての配達先が順番に並ぶまでwhileループ
+  while (visited.size < totalDestinations) {
+    // 現在地routeMatrixMap.get(currentOrigin)が持つ配達先たち
+    const destinationsFromCurrent = routeMatrixMap.get(currentOrigin);
+    // 最小のduration、次の配達先を入れる変数を用意しておく
+    let minDuration = Infinity;
+    let nextDestination = null;
+    // 各destinationのdurationを比較していく
+    for (const destination of destinationsFromCurrent) {
+      // RouteMatrixMapのdurationは'~~s'という文字列なのでsを''（空白でもない、無）に置き換え（要するにsを削除）してNumber型に変換する
+      const durationSec = Number(destination.duration.replace('s', ''));
+      // durationSecが0（自分自身が目的地）になったとき、もしくは、visitedSetにdestinationIndexが存在していたら現在のループを抜け出す
+      if (durationSec === 0 || visited.has(destination.destinationIndex)) continue;
+      // durationSecの比較と更新、nextDestinationの更新
+      if (durationSec < minDuration) {
+        minDuration = durationSec;
+        nextDestination = destination;
+      }
+    }
+    // もういける場所がなくなったらwhile終了
+    if (!nextDestination) break;
+    // visitedに次の配達先のdestinationIndexを追加しておく
+    visited.add(nextDestination.destinationIndex);
+    // 次の出発地の更新
+    currentOrigin = nextDestination.destinationIndex;
+    
+    // orderの更新
+    order.push(nextDestination.destinationIndex);
+  }
+  console.log(order);
+};
+
 
 
 
@@ -336,6 +392,7 @@ generateOrderButton.addEventListener('click', async (e) => {
   const payload1820 = createPayload(origins1820, destinations1820);
   // RouteMatrixAPIを叩く
   const data = await sendToComputeRouteMatrixApi(payload1820);
-
-  console.log(data);
+  // RouteMatrixAPIで得られたdataをアルゴリズムに使うMapオブジェクトに変換する
+  const routeMatrixMap = createRouteMatrixMap(data);
+  greedyAlgorithm(routeMatrixMap);
 });
