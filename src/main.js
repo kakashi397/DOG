@@ -295,7 +295,8 @@ const greedyAlgorithm = (routeMatrixMap) => {
   let currentOrigin = 0;
   // 郵便局を除いた（-1）RouteMatrixMapのsizeを取得する
   const totalDestinations = routeMatrixMap.size - 1;
-  
+  // 生成された配達順番を保持する配列
+  const order = [];
   // すべての配達先が順番に並ぶまでwhileループ
   while (visited.size < totalDestinations) {
     // 現在地routeMatrixMap.get(currentOrigin)が持つ配達先たち
@@ -317,12 +318,15 @@ const greedyAlgorithm = (routeMatrixMap) => {
     }
     // もういける場所がなくなったらwhile終了
     if (!nextDestination) break;
-    console.log(nextDestination);
     // visitedに次の配達先のdestinationIndexを追加しておく
     visited.add(nextDestination.destinationIndex);
     // 次の出発地の更新
     currentOrigin = nextDestination.destinationIndex;
+    
+    // orderの更新
+    order.push(nextDestination.destinationIndex);
   }
+  console.log(order);
 };
 
 
