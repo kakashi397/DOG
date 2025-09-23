@@ -291,7 +291,7 @@ const greedyAlgorithm = (routeMatrixMap) => {
   // 郵便局を除いた（-1）RouteMatrixMapのsizeを取得する
   const totalDestinations = routeMatrixMap.size;
   // 生成された配達順番を保持する配列
-  const order = [];
+  const initialOrder = [];
   // 総移動時間を保持する変数
   let totalDuration = 0;
   // すべての配達先が順番に並ぶまでwhileループ
@@ -324,15 +324,60 @@ const greedyAlgorithm = (routeMatrixMap) => {
     // 次の出発地の更新
     currentOrigin = nextDestination.destinationIndex;
     // orderの更新
-    order.push(nextDestination.destinationIndex);
+    initialOrder.push(nextDestination.destinationIndex);
     // 総移動時間の更新
     totalDuration += nextDuration;
   }
-  console.log(`配達順： ${order}`);
+  console.log(`配達順： ${initialOrder}`);
   console.log(`総移動時間： ${totalDuration}`);
-  return order;
+  return initialOrder;
 };
+// 2-optアルゴリズムの関数定義
+const twoOpt = (initialOrder, routeMatrixMap) => {
+  let improved = true;
+  let bestOrder = [...initialOrder];
 
+  // 総移動時間を計算する関数
+  const calculateDuration = (order) => {
+    let total = 0;
+    // 郵便局からスタート
+    let current = 0;
+    for (const next of order) {
+      const destinations = routeMatrixMap.get(current);
+      const d = destinations.find(d => d.destinationIndex === next);
+      total += Number(d.duration.replace('s', ''));
+      current = next;
+    }
+    return total;
+  };
+
+  let bestDuration = calculateDuration(bestOrder);
+
+  while (improved) {
+    improved = false;
+    for (let i = 1; i < bestOrder.length - 1; i++) {
+      for (let k = i + 1; k < bestOrder.length; k++) {
+        // ルートを2-optで反転
+        const newOrder = [
+          ...bestOrder.slice(0, i),
+          ...bestOrder.slice(i, k + 1).reverse(),
+          ...bestOrder.slice(k + 1)
+        ];
+
+        const newDuration = calculateDuration(newOrder);
+        if (newDuration < bestDuration) {
+          bestOrder = newOrder;
+          bestDuration = newDuration;
+          improved = true;
+        }
+      }
+    }
+  }
+
+  console.log(`改善後の配達順； ${bestOrder}`);
+  console.log(`改善後の総移動時間； ${bestDuration}`);
+  return { bestOrder, bestDuration };
+};
 
 
 
@@ -397,5 +442,7 @@ generateOrderButton.addEventListener('click', async (e) => {
   const data = await sendToComputeRouteMatrixApi(payload1820);
   // RouteMatrixAPIで得られたdataをアルゴリズムに使うMapオブジェクトに変換する
   const routeMatrixMap = createRouteMatrixMap(data);
-  greedyAlgorithm(routeMatrixMap);
+  // まずはGreedyAlgorithmで元のルートを生成、これを2-optで改善していく
+  const initialOrder = greedyAlgorithm(routeMatrixMap);
+  twoOpt(initialOrder, routeMatrixMap);
 });
