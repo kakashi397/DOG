@@ -235,24 +235,19 @@ const sendToGeocodingApi = async (timeSlots) => {
   return result;
 }; */
 
-// 18-20時のslotを作る関数定義
+// 郵便局の座標も追加して18-20時のslotを作る関数定義
 const createSlot1820 = (result) => {
-  return Array.from(result['18-20']);
+  return [postOfficeLatLng, ...Array.from(result['18-20'])];
 };
 // 19-21時のslotを作る関数定義
 const createSlot1921 = (result) => {
   return Array.from(result['19-21']);
 };
-// destinationsの先頭にpostOfficeLatLngを挿入する関数定義
-const createOrigins = (slot1820) => {
-  const origins = [postOfficeLatLng, ...slot1820];
-  return origins;
-};
 // ペイロードを作る関数定義
-const createPayload = (origins, destinations) => {
+const createPayload = (slot) => {
   const body = {
-    origins: origins,
-    destinations: destinations,
+    origins: slot,
+    destinations: slot,
   };
   const payload = {
     method: 'POST',
@@ -294,26 +289,32 @@ const greedyAlgorithm = (routeMatrixMap) => {
   // 現在のoriginを格納する変数を用意しておく（最初は0つまり郵便局をセット済み）
   let currentOrigin = 0;
   // 郵便局を除いた（-1）RouteMatrixMapのsizeを取得する
-  const totalDestinations = routeMatrixMap.size - 1;
+  const totalDestinations = routeMatrixMap.size;
   // 生成された配達順番を保持する配列
-  const order = [];
+  const initialOrder = [];
+  // 総移動時間を保持する変数
+  let totalDuration = 0;
   // すべての配達先が順番に並ぶまでwhileループ
   while (visited.size < totalDestinations) {
     // 現在地routeMatrixMap.get(currentOrigin)が持つ配達先たち
     const destinationsFromCurrent = routeMatrixMap.get(currentOrigin);
-    // 最小のduration、次の配達先を入れる変数を用意しておく
+    // 最小のdurationを入れる変数を用意しておく
     let minDuration = Infinity;
+    // 次の配達先を入れる変数を用意しておく
     let nextDestination = null;
+    // 次の配達先へのdurationを入れる変数を用意しておく
+    let nextDuration = 0;
     // 各destinationのdurationを比較していく
     for (const destination of destinationsFromCurrent) {
       // RouteMatrixMapのdurationは'~~s'という文字列なのでsを''（空白でもない、無）に置き換え（要するにsを削除）してNumber型に変換する
       const durationSec = Number(destination.duration.replace('s', ''));
-      // durationSecが0（自分自身が目的地）になったとき、もしくは、visitedSetにdestinationIndexが存在していたら現在のループを抜け出す
-      if (durationSec === 0 || visited.has(destination.destinationIndex)) continue;
+      // durationSecが0（自分自身が目的地）になったとき、もしくは、visitedSetにdestinationIndexが存在していたとき、もしくはdestinationIndex === 0つまり郵便局が一番近い配達先に選ばれているとき、現在のループを抜け出す
+      if (durationSec === 0 || visited.has(destination.destinationIndex) || destination.destinationIndex === 0) continue;
       // durationSecの比較と更新、nextDestinationの更新
       if (durationSec < minDuration) {
         minDuration = durationSec;
         nextDestination = destination;
+        nextDuration = durationSec;
       }
     }
     // もういける場所がなくなったらwhile終了
@@ -322,13 +323,61 @@ const greedyAlgorithm = (routeMatrixMap) => {
     visited.add(nextDestination.destinationIndex);
     // 次の出発地の更新
     currentOrigin = nextDestination.destinationIndex;
-    
     // orderの更新
-    order.push(nextDestination.destinationIndex);
+    initialOrder.push(nextDestination.destinationIndex);
+    // 総移動時間の更新
+    totalDuration += nextDuration;
   }
-  console.log(order);
+  console.log(`配達順： ${initialOrder}`);
+  console.log(`総移動時間： ${totalDuration}`);
+  return initialOrder;
 };
+// 2-optアルゴリズムの関数定義
+const twoOpt = (initialOrder, routeMatrixMap) => {
+  let improved = true;
+  let bestOrder = [...initialOrder];
 
+  // 総移動時間を計算する関数
+  const calculateDuration = (order) => {
+    let total = 0;
+    // 郵便局からスタート
+    let current = 0;
+    for (const next of order) {
+      const destinations = routeMatrixMap.get(current);
+      const d = destinations.find(d => d.destinationIndex === next);
+      total += Number(d.duration.replace('s', ''));
+      current = next;
+    }
+    return total;
+  };
+
+  let bestDuration = calculateDuration(bestOrder);
+
+  while (improved) {
+    improved = false;
+    for (let i = 1; i < bestOrder.length - 1; i++) {
+      for (let k = i + 1; k < bestOrder.length; k++) {
+        // ルートを2-optで反転
+        const newOrder = [
+          ...bestOrder.slice(0, i),
+          ...bestOrder.slice(i, k + 1).reverse(),
+          ...bestOrder.slice(k + 1)
+        ];
+
+        const newDuration = calculateDuration(newOrder);
+        if (newDuration < bestDuration) {
+          bestOrder = newOrder;
+          bestDuration = newDuration;
+          improved = true;
+        }
+      }
+    }
+  }
+
+  console.log(`改善後の配達順； ${bestOrder}`);
+  console.log(`改善後の総移動時間； ${bestDuration}`);
+  return { bestOrder, bestDuration };
+};
 
 
 
@@ -386,13 +435,14 @@ generateOrderButton.addEventListener('click', async (e) => {
   const timeSlots = groupByTimeSlot();
   const result = await sendToGeocodingApi(timeSlots);
   // RouteMatrixAPIに向けてデータを成形していく
-  const destinations1820 = createSlot1820(result);
+  const slot1820 = createSlot1820(result);
   const slot1921 = createSlot1921(result);
-  const origins1820 = createOrigins(destinations1820);
-  const payload1820 = createPayload(origins1820, destinations1820);
+  const payload1820 = createPayload(slot1820);
   // RouteMatrixAPIを叩く
   const data = await sendToComputeRouteMatrixApi(payload1820);
   // RouteMatrixAPIで得られたdataをアルゴリズムに使うMapオブジェクトに変換する
   const routeMatrixMap = createRouteMatrixMap(data);
-  greedyAlgorithm(routeMatrixMap);
+  // まずはGreedyAlgorithmで元のルートを生成、これを2-optで改善していく
+  const initialOrder = greedyAlgorithm(routeMatrixMap);
+  twoOpt(initialOrder, routeMatrixMap);
 });
