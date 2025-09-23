@@ -235,24 +235,19 @@ const sendToGeocodingApi = async (timeSlots) => {
   return result;
 }; */
 
-// 18-20時のslotを作る関数定義
+// 郵便局の座標も追加して18-20時のslotを作る関数定義
 const createSlot1820 = (result) => {
-  return Array.from(result['18-20']);
+  return [postOfficeLatLng, ...Array.from(result['18-20'])];
 };
 // 19-21時のslotを作る関数定義
 const createSlot1921 = (result) => {
   return Array.from(result['19-21']);
 };
-// destinationsの先頭にpostOfficeLatLngを挿入する関数定義
-const createOrigins = (slot1820) => {
-  const origins = [postOfficeLatLng, ...slot1820];
-  return origins;
-};
 // ペイロードを作る関数定義
-const createPayload = (origins, destinations) => {
+const createPayload = (slot) => {
   const body = {
-    origins: origins,
-    destinations: destinations,
+    origins: slot,
+    destinations: slot,
   };
   const payload = {
     method: 'POST',
@@ -388,10 +383,9 @@ generateOrderButton.addEventListener('click', async (e) => {
   const timeSlots = groupByTimeSlot();
   const result = await sendToGeocodingApi(timeSlots);
   // RouteMatrixAPIに向けてデータを成形していく
-  const destinations1820 = createSlot1820(result);
+  const slot1820 = createSlot1820(result);
   const slot1921 = createSlot1921(result);
-  const origins1820 = createOrigins(destinations1820);
-  const payload1820 = createPayload(origins1820, origins1820);
+  const payload1820 = createPayload(slot1820);
   // RouteMatrixAPIを叩く
   const data = await sendToComputeRouteMatrixApi(payload1820);
   // RouteMatrixAPIで得られたdataをアルゴリズムに使うMapオブジェクトに変換する
