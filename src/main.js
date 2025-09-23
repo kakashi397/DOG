@@ -280,8 +280,6 @@ const createRouteMatrixMap = (data) => {
       routeMatrixMap.get(row.originIndex).push({ destinationIndex: row.destinationIndex, duration: row.duration });
     }
   }
-  console.log(routeMatrixMap);
-  
   return routeMatrixMap;
 };
 // Greedyアルゴリズムの関数定義
@@ -294,13 +292,18 @@ const greedyAlgorithm = (routeMatrixMap) => {
   const totalDestinations = routeMatrixMap.size;
   // 生成された配達順番を保持する配列
   const order = [];
+  // 総移動時間を保持する変数
+  let totalDuration = 0;
   // すべての配達先が順番に並ぶまでwhileループ
   while (visited.size < totalDestinations) {
     // 現在地routeMatrixMap.get(currentOrigin)が持つ配達先たち
     const destinationsFromCurrent = routeMatrixMap.get(currentOrigin);
-    // 最小のduration、次の配達先を入れる変数を用意しておく
+    // 最小のdurationを入れる変数を用意しておく
     let minDuration = Infinity;
+    // 次の配達先を入れる変数を用意しておく
     let nextDestination = null;
+    // 次の配達先へのdurationを入れる変数を用意しておく
+    let nextDuration = 0;
     // 各destinationのdurationを比較していく
     for (const destination of destinationsFromCurrent) {
       // RouteMatrixMapのdurationは'~~s'という文字列なのでsを''（空白でもない、無）に置き換え（要するにsを削除）してNumber型に変換する
@@ -311,6 +314,7 @@ const greedyAlgorithm = (routeMatrixMap) => {
       if (durationSec < minDuration) {
         minDuration = durationSec;
         nextDestination = destination;
+        nextDuration = durationSec;
       }
     }
     // もういける場所がなくなったらwhile終了
@@ -319,11 +323,14 @@ const greedyAlgorithm = (routeMatrixMap) => {
     visited.add(nextDestination.destinationIndex);
     // 次の出発地の更新
     currentOrigin = nextDestination.destinationIndex;
-
     // orderの更新
     order.push(nextDestination.destinationIndex);
+    // 総移動時間の更新
+    totalDuration += nextDuration;
   }
-  console.log(order);
+  console.log(`配達順： ${order}`);
+  console.log(`総移動時間： ${totalDuration}`);
+  return order;
 };
 
 
