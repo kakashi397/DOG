@@ -285,6 +285,8 @@ const createRouteMatrixMap = (data) => {
       routeMatrixMap.get(row.originIndex).push({ destinationIndex: row.destinationIndex, duration: row.duration });
     }
   }
+  console.log(routeMatrixMap);
+  
   return routeMatrixMap;
 };
 // Greedyアルゴリズムの関数定義
@@ -294,7 +296,7 @@ const greedyAlgorithm = (routeMatrixMap) => {
   // 現在のoriginを格納する変数を用意しておく（最初は0つまり郵便局をセット済み）
   let currentOrigin = 0;
   // 郵便局を除いた（-1）RouteMatrixMapのsizeを取得する
-  const totalDestinations = routeMatrixMap.size - 1;
+  const totalDestinations = routeMatrixMap.size;
   // 生成された配達順番を保持する配列
   const order = [];
   // すべての配達先が順番に並ぶまでwhileループ
@@ -308,8 +310,8 @@ const greedyAlgorithm = (routeMatrixMap) => {
     for (const destination of destinationsFromCurrent) {
       // RouteMatrixMapのdurationは'~~s'という文字列なのでsを''（空白でもない、無）に置き換え（要するにsを削除）してNumber型に変換する
       const durationSec = Number(destination.duration.replace('s', ''));
-      // durationSecが0（自分自身が目的地）になったとき、もしくは、visitedSetにdestinationIndexが存在していたら現在のループを抜け出す
-      if (durationSec === 0 || visited.has(destination.destinationIndex)) continue;
+      // durationSecが0（自分自身が目的地）になったとき、もしくは、visitedSetにdestinationIndexが存在していたとき、もしくはdestinationIndex === 0つまり郵便局が一番近い配達先に選ばれているとき、現在のループを抜け出す
+      if (durationSec === 0 || visited.has(destination.destinationIndex) || destination.destinationIndex === 0) continue;
       // durationSecの比較と更新、nextDestinationの更新
       if (durationSec < minDuration) {
         minDuration = durationSec;
@@ -322,7 +324,7 @@ const greedyAlgorithm = (routeMatrixMap) => {
     visited.add(nextDestination.destinationIndex);
     // 次の出発地の更新
     currentOrigin = nextDestination.destinationIndex;
-    
+
     // orderの更新
     order.push(nextDestination.destinationIndex);
   }
@@ -389,7 +391,7 @@ generateOrderButton.addEventListener('click', async (e) => {
   const destinations1820 = createSlot1820(result);
   const slot1921 = createSlot1921(result);
   const origins1820 = createOrigins(destinations1820);
-  const payload1820 = createPayload(origins1820, destinations1820);
+  const payload1820 = createPayload(origins1820, origins1820);
   // RouteMatrixAPIを叩く
   const data = await sendToComputeRouteMatrixApi(payload1820);
   // RouteMatrixAPIで得られたdataをアルゴリズムに使うMapオブジェクトに変換する
