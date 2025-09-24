@@ -289,10 +289,10 @@ const calculateTotalDuration = (order, routeMatrixMap) => {
   // 現在地は郵便局(0)からスタート
   let currentOrigin = 0;
   for (const next of order) {
-    // 次の配達先の一覧をdestinationsに代入
-    const destinations = routeMatrixMap.get(currentOrigin);
+    // 次の配達先の一覧をdestinationsFromCurrentに代入
+    const destinationsFromCurrent = routeMatrixMap.get(currentOrigin);
     // 現在のnextの番号と同じdestinationIndexを見つけてdに代入
-    const destination = destinations.find(d => d.destinationIndex === next);
+    const destination = destinationsFromCurrent.find(d => d.destinationIndex === next);
     // 次の配達先へのdurationを足す
     totalDuration += Number(destination.duration.replace('s', ''));
     // 現在地の更新
@@ -306,7 +306,7 @@ const greedyAlgorithm = (routeMatrixMap) => {
   const visited = new Set();
   // 現在のoriginを格納する変数を用意しておく（最初は0つまり郵便局をセット済み）
   let currentOrigin = 0;
-  // 郵便局を除いた（-1）RouteMatrixMapのsizeを取得する
+  // RouteMatrixMapのsizeを取得する
   const totalDestinations = routeMatrixMap.size;
   // 生成された配達順番を保持する配列
   const initialOrder = [];
@@ -345,25 +345,26 @@ const greedyAlgorithm = (routeMatrixMap) => {
   return initialOrder;
 };
 // 2-optアルゴリズムの関数定義
-const twoOpt = (initialOrder, routeMatrixMap) => {
-  // 改善が見つかったらtrue
+const twoOptAlgorithm = (initialOrder, routeMatrixMap) => {
+  // whileループを走らせるスイッチ
   let improved = true;
-  // 暫定的なベストルート(初期はinitialOrderをコピーして使う)
+  // 勝ち残りの配達順(初期はinitialOrderをコピーして使う)
   let bestOrder = [...initialOrder];
-  // 
+  // 勝ち残りのduration
   let bestDuration = calculateTotalDuration(bestOrder, routeMatrixMap);
 
   while (improved) {
+    // 改善が見つからなかった状態を最初にセット
     improved = false;
-    for (let i = 1; i < bestOrder.length - 1; i++) {
-      for (let k = i + 1; k < bestOrder.length; k++) {
+    for (let i = 0; i < bestOrder.length - 1; i++) { // 反転の始点(i)をforループ
+      for (let k = i + 1; k < bestOrder.length; k++) { // 反転の終点(k)をforループ
         // ルートを2-optで反転
         const newOrder = [
-          ...bestOrder.slice(0, i),
-          ...bestOrder.slice(i, k + 1).reverse(),
-          ...bestOrder.slice(k + 1)
+          ...bestOrder.slice(0, i), // 反転させない前半
+          ...bestOrder.slice(i, k + 1).reverse(), // iとkを含んで反転
+          ...bestOrder.slice(k + 1) // 反転させない後半
         ];
-
+        // durationを比較する部分　短くなるならそのdurationを保持してimproved = trueにスイッチ
         const newDuration = calculateTotalDuration(newOrder, routeMatrixMap);
         if (newDuration < bestDuration) {
           bestOrder = newOrder;
@@ -373,7 +374,6 @@ const twoOpt = (initialOrder, routeMatrixMap) => {
       }
     }
   }
-
   console.log(`改善後の配達順； ${bestOrder}`);
   console.log(`改善後の総移動時間； ${bestDuration}`);
   return bestOrder;
@@ -444,5 +444,5 @@ generateOrderButton.addEventListener('click', async (e) => {
   const routeMatrixMap = createRouteMatrixMap(data);
   // まずはGreedyAlgorithmで元のルートを生成、これを2-optで改善していく
   const initialOrder = greedyAlgorithm(routeMatrixMap);
-  twoOpt(initialOrder, routeMatrixMap);
+  twoOptAlgorithm(initialOrder, routeMatrixMap);
 });
