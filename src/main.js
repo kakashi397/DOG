@@ -282,6 +282,24 @@ const createRouteMatrixMap = (data) => {
   }
   return routeMatrixMap;
 };
+// 総移動時間を計算する関数定義
+const calculateTotalDuration = (order, routeMatrixMap) => {
+  // 総移動時間の初期化
+  let totalDuration = 0;
+  // 現在地は郵便局(0)からスタート
+  let currentOrigin = 0;
+  for (const next of order) {
+    // 次の配達先の一覧をdestinationsに代入
+    const destinations = routeMatrixMap.get(currentOrigin);
+    // 現在のnextの番号と同じdestinationIndexを見つけてdに代入
+    const destination = destinations.find(d => d.destinationIndex === next);
+    // 次の配達先へのdurationを足す
+    totalDuration += Number(destination.duration.replace('s', ''));
+    // 現在地の更新
+    currentOrigin = next;
+  }
+  return totalDuration;
+};
 // Greedyアルゴリズムの関数定義
 const greedyAlgorithm = (routeMatrixMap) => {
   // 訪問済みのdestinationを格納するSetを用意しておく
@@ -292,8 +310,6 @@ const greedyAlgorithm = (routeMatrixMap) => {
   const totalDestinations = routeMatrixMap.size;
   // 生成された配達順番を保持する配列
   const initialOrder = [];
-  // 総移動時間を保持する変数
-  let totalDuration = 0;
   // すべての配達先が順番に並ぶまでwhileループ
   while (visited.size < totalDestinations) {
     // 現在地routeMatrixMap.get(currentOrigin)が持つ配達先たち
@@ -325,33 +341,17 @@ const greedyAlgorithm = (routeMatrixMap) => {
     currentOrigin = nextDestination.destinationIndex;
     // orderの更新
     initialOrder.push(nextDestination.destinationIndex);
-    // 総移動時間の更新
-    totalDuration += nextDuration;
   }
-  console.log(`配達順： ${initialOrder}`);
-  console.log(`総移動時間： ${totalDuration}`);
   return initialOrder;
 };
 // 2-optアルゴリズムの関数定義
 const twoOpt = (initialOrder, routeMatrixMap) => {
+  // 改善が見つかったらtrue
   let improved = true;
+  // 暫定的なベストルート(初期はinitialOrderをコピーして使う)
   let bestOrder = [...initialOrder];
-
-  // 総移動時間を計算する関数
-  const calculateDuration = (order) => {
-    let total = 0;
-    // 郵便局からスタート
-    let current = 0;
-    for (const next of order) {
-      const destinations = routeMatrixMap.get(current);
-      const d = destinations.find(d => d.destinationIndex === next);
-      total += Number(d.duration.replace('s', ''));
-      current = next;
-    }
-    return total;
-  };
-
-  let bestDuration = calculateDuration(bestOrder);
+  // 
+  let bestDuration = calculateTotalDuration(bestOrder, routeMatrixMap);
 
   while (improved) {
     improved = false;
@@ -364,7 +364,7 @@ const twoOpt = (initialOrder, routeMatrixMap) => {
           ...bestOrder.slice(k + 1)
         ];
 
-        const newDuration = calculateDuration(newOrder);
+        const newDuration = calculateTotalDuration(newOrder, routeMatrixMap);
         if (newDuration < bestDuration) {
           bestOrder = newOrder;
           bestDuration = newDuration;
@@ -376,7 +376,7 @@ const twoOpt = (initialOrder, routeMatrixMap) => {
 
   console.log(`改善後の配達順； ${bestOrder}`);
   console.log(`改善後の総移動時間； ${bestDuration}`);
-  return { bestOrder, bestDuration };
+  return bestOrder;
 };
 
 
@@ -424,7 +424,7 @@ addButton.addEventListener('click', (e) => {
 });
 // 「配達先を削除」ボタンを押すと選択された配達先を削除する
 removeButton.addEventListener('click', (e) => {
-  e.preventDefault;
+  e.preventDefault();
   const checkedboxes = getCheckedboxes();
   removeCheckedboxes(checkedboxes);
 });
