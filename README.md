@@ -1,10 +1,11 @@
-Delivery Order Generator
+##Delivery Order Generator
 
 2025/9/8～
 効率の良い配達順を生成するプログラムです。
-仕事でつかうかも？力試しで作ってみます。
+仕事でつかうかも？
 
 GoogleMapのAPIを使います。
 ユーザーが入力した住所を、**Geocoding API**を使って緯度と経度の座標に変換する。
 変換されたすべての地点の座標を使って、**Distance Matrix API**で各地点間の距離を計算する。
 計算された距離データを使って、すべての地点を回る最短のルートを特定する。
+
