@@ -240,8 +240,8 @@ const createSlot1820 = (result) => {
   return [postOfficeLatLng, ...Array.from(result['18-20'])];
 };
 // 19-21時のslotを作る関数定義
-const createSlot1921 = (result) => {
-  return Array.from(result['19-21']);
+const createSlot1921 = (result, bestOrder) => {
+  return [result['18-20'].at(bestOrder.at(-1) - 1), ...Array.from(result['19-21'])];
 };
 // ペイロードを作る関数定義
 const createPayload = (slot) => {
@@ -336,8 +336,6 @@ const durationGreedyAlgorithm = (routeMatrixMap) => {
     let minDuration = Infinity;
     // 次の配達先を入れる変数を用意しておく
     let nextDestination = null;
-    // 次の配達先へのdurationを入れる変数を用意しておく
-    let nextDuration = 0;
     // 各destinationのdurationを比較していく
     for (const destination of destinationsFromCurrent) {
       // RouteMatrixMapのdurationは'~~s'という文字列なのでsを''（空白でもない、無）に置き換え（要するにsを削除）してNumber型に変換する
@@ -348,7 +346,6 @@ const durationGreedyAlgorithm = (routeMatrixMap) => {
       if (durationSec < minDuration) {
         minDuration = durationSec;
         nextDestination = destination;
-        nextDuration = durationSec;
       }
     }
     // もういける場所がなくなったらwhile終了
@@ -380,8 +377,6 @@ const distanceGreedyAlgorithm = (routeMatrixMap) => {
     let minDistance = Infinity;
     // 次の配達先を入れる変数を用意しておく
     let nextDestination = null;
-    // 次の配達先へのdistanceを入れる変数を用意しておく
-    let nextDistance = 0;
     // 各destinationのdistanceMetersを比較していく
     for (const destination of destinationsFromCurrent) {
       const distanceMeters = destination.distanceMeters;
@@ -391,7 +386,6 @@ const distanceGreedyAlgorithm = (routeMatrixMap) => {
       if (distanceMeters < minDistance) {
         minDistance = distanceMeters;
         nextDestination = destination;
-        nextDistance = distanceMeters;
       }
     }
     // もういける場所がなくなったらwhile終了
@@ -413,9 +407,6 @@ const durationTwoOptAlgorithm = (initialOrder, routeMatrixMap) => {
   let bestOrder = [...initialOrder];
   // 勝ち残りのduration
   let bestDuration = calculateTotalDuration(bestOrder, routeMatrixMap);
-  console.log(`Greedy(時間): ${bestOrder}`);
-  console.log(`Greedy(時間): ${bestDuration}`);
-
 
   while (improved) {
     // 改善が見つからなかった状態を最初にセット
@@ -438,8 +429,6 @@ const durationTwoOptAlgorithm = (initialOrder, routeMatrixMap) => {
       }
     }
   }
-  console.log(`改善後の配達順； ${bestOrder}`);
-  console.log(`改善後の総移動時間； ${bestDuration}`);
   return bestOrder;
 };
 // 2-optアルゴリズム（距離）の関数定義
@@ -450,8 +439,6 @@ const distanceTwoOptAlgorithm = (initialOrder, routeMatrixMap) => {
   let bestOrder = [...initialOrder];
   // 勝ち残りのdistance
   let bestDistance = calculateTotalDistance(bestOrder, routeMatrixMap);
-  console.log(`Greedy(距離): ${bestOrder}`);
-  console.log(`Greedy(距離): ${bestDistance}`);
 
   while (improved) {
     // 改善が見つからなかった状態を最初にセット
@@ -474,8 +461,6 @@ const distanceTwoOptAlgorithm = (initialOrder, routeMatrixMap) => {
       }
     }
   }
-  console.log(`改善後の配達順； ${bestOrder}`);
-  console.log(`改善後の総移動距離； ${bestDistance}`);
   return bestOrder;
 };
 
@@ -536,15 +521,15 @@ generateOrderButton.addEventListener('click', async (e) => {
   const result = await sendToGeocodingApi(timeSlots);
   // RouteMatrixAPIに向けてデータを成形していく
   const slot1820 = createSlot1820(result);
-  const slot1921 = createSlot1921(result);
   const payload1820 = createPayload(slot1820);
   // RouteMatrixAPIを叩く
   const data = await sendToComputeRouteMatrixApi(payload1820);
   // RouteMatrixAPIで得られたdataをアルゴリズムに使うMapオブジェクトに変換する
   const routeMatrixMap = createRouteMatrixMap(data);
-  // まずはGreedyAlgorithmで元のルートを生成、これを2-optで改善していく
-  const durationInitialOrder = durationGreedyAlgorithm(routeMatrixMap);
-  durationTwoOptAlgorithm(durationInitialOrder, routeMatrixMap);
+  // まずはGreedyAlgorithmで元のルートを生成、これを2-optで改善していく(距離)
   const distanceInitialOrder = distanceGreedyAlgorithm(routeMatrixMap);
-  distanceTwoOptAlgorithm(distanceInitialOrder, routeMatrixMap);
+  const bestOrder = distanceTwoOptAlgorithm(distanceInitialOrder, routeMatrixMap);
+  const slot1921 = createSlot1921(result, bestOrder);
+  console.log(slot1921);
+  
 });
