@@ -239,9 +239,9 @@ const sendToGeocodingApi = async (timeSlots) => {
 const createSlot1820 = (result) => {
   return [postOfficeLatLng, ...Array.from(result['18-20'])];
 };
-// 19-21時のslotを作る関数定義
+// 18-20時最後の配達先の座標、最後に郵便局の座標も追加して19-21時のslotを作る関数定義
 const createSlot1921 = (result, bestOrder) => {
-  return [result['18-20'].at(bestOrder.at(-1) - 1), ...Array.from(result['19-21'])];
+  return [result['18-20'].at(bestOrder.at(-1) - 1), ...Array.from(result['19-21']), postOfficeLatLng];
 };
 // ペイロードを作る関数定義
 const createPayload = (slot) => {
@@ -519,17 +519,23 @@ generateOrderButton.addEventListener('click', async (e) => {
   // GeocodingAPIに関する処理
   const timeSlots = groupByTimeSlot();
   const result = await sendToGeocodingApi(timeSlots);
-  // RouteMatrixAPIに向けてデータを成形していく
+
+  // RouteMatrixAPIに向けてデータを成形していく(18-20時)
   const slot1820 = createSlot1820(result);
   const payload1820 = createPayload(slot1820);
   // RouteMatrixAPIを叩く
-  const data = await sendToComputeRouteMatrixApi(payload1820);
+  const data1820 = await sendToComputeRouteMatrixApi(payload1820);
   // RouteMatrixAPIで得られたdataをアルゴリズムに使うMapオブジェクトに変換する
-  const routeMatrixMap = createRouteMatrixMap(data);
+  const routeMatrixMap1820 = createRouteMatrixMap(data1820);
   // まずはGreedyAlgorithmで元のルートを生成、これを2-optで改善していく(距離)
-  const distanceInitialOrder = distanceGreedyAlgorithm(routeMatrixMap);
-  const bestOrder = distanceTwoOptAlgorithm(distanceInitialOrder, routeMatrixMap);
-  const slot1921 = createSlot1921(result, bestOrder);
-  console.log(slot1921);
-  
+  const distanceInitialOrder1820 = distanceGreedyAlgorithm(routeMatrixMap1820);
+  const bestOrder1820 = distanceTwoOptAlgorithm(distanceInitialOrder1820, routeMatrixMap1820);
+  // 以下19-21時の処理
+  const slot1921 = createSlot1921(result, bestOrder1820);
+  const payload1921 = createPayload(slot1921);
+  const data1921 = await sendToComputeRouteMatrixApi(payload1921);
+  const routeMatrixMap1921 = createRouteMatrixMap(data1921);
+  const distanceGreedyAlgorithm1921 = distanceGreedyAlgorithm(routeMatrixMap1921);
+  const bestOrder1921 = distanceTwoOptAlgorithm(distanceGreedyAlgorithm1921, routeMatrixMap1921);
+  console.log(bestOrder1921);
 });
