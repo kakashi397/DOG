@@ -363,7 +363,7 @@ const durationGreedyAlgorithm = (routeMatrixMap) => {
 const distanceGreedyAlgorithm = (routeMatrixMap) => {
   // 訪問済みのdestinationを格納するSetを用意しておく
   const visited = new Set();
-  // 現在のoriginを格納する変数を用意しておく（最初は0つまり郵便局をセット済み）
+  // 現在のoriginを格納する変数を用意しておく（最初は0をセット済み）
   let currentOrigin = 0;
   // RouteMatrixMapのsizeを取得する
   const totalDestinations = routeMatrixMap.size;
@@ -380,7 +380,7 @@ const distanceGreedyAlgorithm = (routeMatrixMap) => {
     // 各destinationのdistanceMetersを比較していく
     for (const destination of destinationsFromCurrent) {
       const distanceMeters = destination.distanceMeters;
-      // distanceMetersが0（自分自身が目的地）になったとき、もしくは、visitedSetにdestinationIndexが存在していたとき、もしくはdestinationIndex === 0つまり郵便局が一番近い配達先に選ばれているとき、現在のループを抜け出す
+      // distanceMetersが0（自分自身が目的地）になったとき、もしくは、visitedSetにdestinationIndexが存在していたとき、もしくはdestinationIndex === 0が一番近い配達先に選ばれているとき、現在のループを抜け出す
       if (distanceMeters === 0 || visited.has(destination.destinationIndex) || destination.destinationIndex === 0) continue;
       // distanceMetersの比較と更新、nextDestinationの更新
       if (distanceMeters < minDistance) {
