@@ -283,7 +283,7 @@ const createRouteMatrixMap = (data) => {
   return routeMatrixMap;
 };
 // 総移動時間を計算する関数定義
-const calculateTotalDuration = (order, routeMatrixMap) => {
+/* const calculateTotalDuration = (order, routeMatrixMap) => {
   // 総移動時間の初期化
   let totalDuration = 0;
   // 現在地は郵便局(0)からスタート
@@ -299,7 +299,7 @@ const calculateTotalDuration = (order, routeMatrixMap) => {
     currentOrigin = next;
   }
   return totalDuration;
-};
+}; */
 // 総移動距離を計算する関数定義
 const calculateTotalDistance = (order, routeMatrixMap) => {
   // 総移動距離の初期化
@@ -319,7 +319,7 @@ const calculateTotalDistance = (order, routeMatrixMap) => {
   return totalDistance;
 };
 // Greedy(移動時間)アルゴリズムの関数定義
-const durationGreedyAlgorithm = (routeMatrixMap) => {
+/* const durationGreedyAlgorithm = (routeMatrixMap) => {
   // 訪問済みのdestinationを格納するSetを用意しておく
   const visited = new Set();
   // 現在のoriginを格納する変数を用意しておく（最初は0つまり郵便局をセット済み）
@@ -358,7 +358,7 @@ const durationGreedyAlgorithm = (routeMatrixMap) => {
     initialOrder.push(nextDestination.destinationIndex);
   }
   return initialOrder;
-};
+}; */
 // Greedy(移動距離)アルゴリズムの関数定義
 const distanceGreedyAlgorithm = (routeMatrixMap) => {
   // 訪問済みのdestinationを格納するSetを用意しておく
@@ -381,7 +381,7 @@ const distanceGreedyAlgorithm = (routeMatrixMap) => {
     for (const destination of destinationsFromCurrent) {
       const distanceMeters = destination.distanceMeters;
       // distanceMetersが0（自分自身が目的地）になったとき、もしくは、visitedSetにdestinationIndexが存在していたとき、もしくはdestinationIndex === 0が一番近い配達先に選ばれているとき、現在のループを抜け出す
-      if (distanceMeters === 0 || visited.has(destination.destinationIndex) || destination.destinationIndex === 0) continue;
+      if (distanceMeters === 0 || visited.has(destination.destinationIndex) || destination.destinationIndex === 0 || destination.destinationIndex === 12) continue;
       // distanceMetersの比較と更新、nextDestinationの更新
       if (distanceMeters < minDistance) {
         minDistance = distanceMeters;
@@ -400,7 +400,7 @@ const distanceGreedyAlgorithm = (routeMatrixMap) => {
   return initialOrder;
 };
 // 2-optアルゴリズム(時間)の関数定義
-const durationTwoOptAlgorithm = (initialOrder, routeMatrixMap) => {
+/* const durationTwoOptAlgorithm = (initialOrder, routeMatrixMap) => {
   // whileループを走らせるスイッチ
   let improved = true;
   // 勝ち残りの配達順(初期はinitialOrderをコピーして使う)
@@ -430,7 +430,7 @@ const durationTwoOptAlgorithm = (initialOrder, routeMatrixMap) => {
     }
   }
   return bestOrder;
-};
+}; */
 // 2-optアルゴリズム（距離）の関数定義
 const distanceTwoOptAlgorithm = (initialOrder, routeMatrixMap) => {
   // whileループを走らせるスイッチ
