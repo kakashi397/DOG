@@ -240,8 +240,8 @@ const createSlot1820 = (result) => {
   return [postOfficeLatLng, ...Array.from(result['18-20'])];
 };
 // 18-20時最後の配達先の座標、最後に郵便局の座標も追加して19-21時のslotを作る関数定義
-const createSlot1921 = (result, bestOrder) => {
-  return [result['18-20'].at(bestOrder.at(-1) - 1), ...Array.from(result['19-21']), postOfficeLatLng];
+const createSlot1921 = (result) => {
+  return [postOfficeLatLng, ...Array.from(result['19-21'])];
 };
 // ペイロードを作る関数定義
 const createPayload = (slot) => {
@@ -381,7 +381,7 @@ const distanceGreedyAlgorithm = (routeMatrixMap) => {
     for (const destination of destinationsFromCurrent) {
       const distanceMeters = destination.distanceMeters;
       // distanceMetersが0（自分自身が目的地）になったとき、もしくは、visitedSetにdestinationIndexが存在していたとき、もしくはdestinationIndex === 0が一番近い配達先に選ばれているとき、現在のループを抜け出す
-      if (distanceMeters === 0 || visited.has(destination.destinationIndex) || destination.destinationIndex === 0 || destination.destinationIndex === 12) continue;
+      if (distanceMeters === 0 || visited.has(destination.destinationIndex) || destination.destinationIndex === 0) continue;
       // distanceMetersの比較と更新、nextDestinationの更新
       if (distanceMeters < minDistance) {
         minDistance = distanceMeters;
@@ -519,7 +519,6 @@ generateOrderButton.addEventListener('click', async (e) => {
   // GeocodingAPIに関する処理
   const timeSlots = groupByTimeSlot();
   const result = await sendToGeocodingApi(timeSlots);
-
   // RouteMatrixAPIに向けてデータを成形していく(18-20時)
   const slot1820 = createSlot1820(result);
   const payload1820 = createPayload(slot1820);
@@ -534,6 +533,8 @@ generateOrderButton.addEventListener('click', async (e) => {
   const slot1921 = createSlot1921(result, bestOrder1820);
   const payload1921 = createPayload(slot1921);
   const data1921 = await sendToComputeRouteMatrixApi(payload1921);
+  console.log(data1921);
+  
   const routeMatrixMap1921 = createRouteMatrixMap(data1921);
   const distanceGreedyAlgorithm1921 = distanceGreedyAlgorithm(routeMatrixMap1921);
   const bestOrder1921 = distanceTwoOptAlgorithm(distanceGreedyAlgorithm1921, routeMatrixMap1921);
