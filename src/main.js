@@ -124,9 +124,9 @@ const removeFeedbackMessage = () => {
 // 入力された値に応じて時間帯と住所のテキストを成形する関数定義
 const formatAddress = (timeSlot, townName, chome, banchi, gou) => {
   if (townName === '大字香椎') {
-    return `${timeSlot}: 福岡県福岡市東区${townName}${banchi}番地`
+    return `${timeSlot}: ${townName}${banchi}番地`
   } else {
-    return `${timeSlot}: 福岡県福岡市東区${townName}${chome}丁目${banchi}-${gou}`
+    return `${timeSlot}: ${townName}${chome}丁目${banchi}-${gou}`
   }
 };
 // 成形されたテキストを配達先リストの枠内に表示する関数定義
@@ -179,6 +179,8 @@ const groupByTimeSlot = () => {
       }
     });
   });
+  console.log(timeSlots);
+  
   return timeSlots;
 };
 // timeSlotsの値（配達先住所）を一件ずつGeocodingAPIへ送り変換された座標を再び時間帯ごとに配列にまとめたオブジェクトを返す関数定義
@@ -240,8 +242,8 @@ const createSlot1820 = (result) => {
   return [postOfficeLatLng, ...Array.from(result['18-20'])];
 };
 // 18-20時最後の配達先の座標、最後に郵便局の座標も追加して19-21時のslotを作る関数定義
-const createSlot1921 = (result, bestOrder) => {
-  return [result['18-20'].at(bestOrder.at(-1) - 1), ...Array.from(result['19-21']), postOfficeLatLng];
+const createSlot1921 = (result) => {
+  return [postOfficeLatLng, ...Array.from(result['19-21'])];
 };
 // ペイロードを作る関数定義
 const createPayload = (slot) => {
@@ -381,7 +383,7 @@ const distanceGreedyAlgorithm = (routeMatrixMap) => {
     for (const destination of destinationsFromCurrent) {
       const distanceMeters = destination.distanceMeters;
       // distanceMetersが0（自分自身が目的地）になったとき、もしくは、visitedSetにdestinationIndexが存在していたとき、もしくはdestinationIndex === 0が一番近い配達先に選ばれているとき、現在のループを抜け出す
-      if (distanceMeters === 0 || visited.has(destination.destinationIndex) || destination.destinationIndex === 0 || destination.destinationIndex === 12) continue;
+      if (distanceMeters === 0 || visited.has(destination.destinationIndex) || destination.destinationIndex === 0) continue;
       // distanceMetersの比較と更新、nextDestinationの更新
       if (distanceMeters < minDistance) {
         minDistance = distanceMeters;
@@ -519,7 +521,6 @@ generateOrderButton.addEventListener('click', async (e) => {
   // GeocodingAPIに関する処理
   const timeSlots = groupByTimeSlot();
   const result = await sendToGeocodingApi(timeSlots);
-
   // RouteMatrixAPIに向けてデータを成形していく(18-20時)
   const slot1820 = createSlot1820(result);
   const payload1820 = createPayload(slot1820);
@@ -530,12 +531,36 @@ generateOrderButton.addEventListener('click', async (e) => {
   // まずはGreedyAlgorithmで元のルートを生成、これを2-optで改善していく(距離)
   const distanceInitialOrder1820 = distanceGreedyAlgorithm(routeMatrixMap1820);
   const bestOrder1820 = distanceTwoOptAlgorithm(distanceInitialOrder1820, routeMatrixMap1820);
+  console.log(bestOrder1820);
+  
   // 以下19-21時の処理
-  const slot1921 = createSlot1921(result, bestOrder1820);
+  const slot1921 = createSlot1921(result);
   const payload1921 = createPayload(slot1921);
   const data1921 = await sendToComputeRouteMatrixApi(payload1921);
   const routeMatrixMap1921 = createRouteMatrixMap(data1921);
   const distanceGreedyAlgorithm1921 = distanceGreedyAlgorithm(routeMatrixMap1921);
   const bestOrder1921 = distanceTwoOptAlgorithm(distanceGreedyAlgorithm1921, routeMatrixMap1921);
-  console.log(bestOrder1921);
+  console.log(bestOrder1921.reverse());
+
+
+  // 以下時間帯ごとのlegendに配達順住所のliを返す処理のお試し
+const hoge = groupByTimeSlot();
+
+const ordered1820 = bestOrder1820.map(i => hoge['18-20'][i - 1]);
+const ordered1921 = bestOrder1921.map(i => hoge['19-21'][i - 1]);
+
+const fillTimeSlot = (ulSelector, addressArray) => {
+  const ol = document.querySelector(ulSelector);
+  ol.innerHTML = '';
+
+  addressArray.forEach(address => {
+    const li = document.createElement('li');
+    li.textContent = address;
+    ol.appendChild(li);
+  });
+};
+
+fillTimeSlot('#time-slot-18-20', ordered1820);
+fillTimeSlot('#time-slot-19-21', ordered1921);
+
 });
