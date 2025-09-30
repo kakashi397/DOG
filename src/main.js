@@ -124,9 +124,9 @@ const removeFeedbackMessage = () => {
 // 入力された値に応じて時間帯と住所のテキストを成形する関数定義
 const formatAddress = (timeSlot, townName, chome, banchi, gou) => {
   if (townName === '大字香椎') {
-    return `${timeSlot}: 福岡県福岡市東区${townName}${banchi}番地`
+    return `${timeSlot}: ${townName}${banchi}番地`
   } else {
-    return `${timeSlot}: 福岡県福岡市東区${townName}${chome}丁目${banchi}-${gou}`
+    return `${timeSlot}: ${townName}${chome}丁目${banchi}-${gou}`
   }
 };
 // 成形されたテキストを配達先リストの枠内に表示する関数定義
@@ -529,12 +529,12 @@ generateOrderButton.addEventListener('click', async (e) => {
   // まずはGreedyAlgorithmで元のルートを生成、これを2-optで改善していく(距離)
   const distanceInitialOrder1820 = distanceGreedyAlgorithm(routeMatrixMap1820);
   const bestOrder1820 = distanceTwoOptAlgorithm(distanceInitialOrder1820, routeMatrixMap1820);
+  console.log(bestOrder1820);
+  
   // 以下19-21時の処理
   const slot1921 = createSlot1921(result);
   const payload1921 = createPayload(slot1921);
   const data1921 = await sendToComputeRouteMatrixApi(payload1921);
-  console.log(data1921);
-  
   const routeMatrixMap1921 = createRouteMatrixMap(data1921);
   const distanceGreedyAlgorithm1921 = distanceGreedyAlgorithm(routeMatrixMap1921);
   const bestOrder1921 = distanceTwoOptAlgorithm(distanceGreedyAlgorithm1921, routeMatrixMap1921);
