@@ -179,6 +179,8 @@ const groupByTimeSlot = () => {
       }
     });
   });
+  console.log(timeSlots);
+  
   return timeSlots;
 };
 // timeSlotsの値（配達先住所）を一件ずつGeocodingAPIへ送り変換された座標を再び時間帯ごとに配列にまとめたオブジェクトを返す関数定義
@@ -539,4 +541,26 @@ generateOrderButton.addEventListener('click', async (e) => {
   const distanceGreedyAlgorithm1921 = distanceGreedyAlgorithm(routeMatrixMap1921);
   const bestOrder1921 = distanceTwoOptAlgorithm(distanceGreedyAlgorithm1921, routeMatrixMap1921);
   console.log(bestOrder1921.reverse());
+
+
+  // 以下時間帯ごとのlegendに配達順住所のliを返す処理のお試し
+const hoge = groupByTimeSlot();
+
+const ordered1820 = bestOrder1820.map(i => hoge['18-20'][i - 1]);
+const ordered1921 = bestOrder1921.map(i => hoge['19-21'][i - 1]);
+
+const fillTimeSlot = (ulSelector, addressArray) => {
+  const ol = document.querySelector(ulSelector);
+  ol.innerHTML = '';
+
+  addressArray.forEach(address => {
+    const li = document.createElement('li');
+    li.textContent = address;
+    ol.appendChild(li);
+  });
+};
+
+fillTimeSlot('#time-slot-18-20', ordered1820);
+fillTimeSlot('#time-slot-19-21', ordered1921);
+
 });
