@@ -530,7 +530,7 @@ generateOrderButton.addEventListener('click', async (e) => {
   const distanceInitialOrder1820 = distanceGreedyAlgorithm(routeMatrixMap1820);
   const bestOrder1820 = distanceTwoOptAlgorithm(distanceInitialOrder1820, routeMatrixMap1820);
   // 以下19-21時の処理
-  const slot1921 = createSlot1921(result, bestOrder1820);
+  const slot1921 = createSlot1921(result);
   const payload1921 = createPayload(slot1921);
   const data1921 = await sendToComputeRouteMatrixApi(payload1921);
   console.log(data1921);
@@ -538,5 +538,5 @@ generateOrderButton.addEventListener('click', async (e) => {
   const routeMatrixMap1921 = createRouteMatrixMap(data1921);
   const distanceGreedyAlgorithm1921 = distanceGreedyAlgorithm(routeMatrixMap1921);
   const bestOrder1921 = distanceTwoOptAlgorithm(distanceGreedyAlgorithm1921, routeMatrixMap1921);
-  console.log(bestOrder1921);
+  console.log(bestOrder1921.reverse());
 });
