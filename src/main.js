@@ -180,7 +180,7 @@ const groupByTimeSlot = () => {
     });
   });
   console.log(timeSlots);
-  
+
   return timeSlots;
 };
 // timeSlotsの値（配達先住所）を一件ずつGeocodingAPIへ送り変換された座標を再び時間帯ごとに配列にまとめたオブジェクトを返す関数定義
@@ -241,7 +241,7 @@ const sendToGeocodingApi = async (timeSlots) => {
 const createSlot1820 = (result) => {
   return [postOfficeLatLng, ...Array.from(result['18-20'])];
 };
-// 18-20時最後の配達先の座標、最後に郵便局の座標も追加して19-21時のslotを作る関数定義
+// 郵便局の座標も追加して19-21時のslotを作る関数定義
 const createSlot1921 = (result) => {
   return [postOfficeLatLng, ...Array.from(result['19-21'])];
 };
@@ -276,10 +276,10 @@ const createRouteMatrixMap = (data) => {
   for (const row of data) {
     if (routeMatrixMap.has(row.originIndex)) {
       // originIndexのキーを既に持ってたら、その値にオブジェクト型でデータを渡す
-      routeMatrixMap.get(row.originIndex).push({ destinationIndex: row.destinationIndex, duration: row.duration, distanceMeters: row.originIndex === row.distinationIndex ? 0 : row.distanceMeters });
+      routeMatrixMap.get(row.originIndex).push({ destinationIndex: row.destinationIndex, duration: row.duration, distanceMeters: row.originIndex === row.destinationIndex ? 0 : row.distanceMeters });
     } else { // キーが無ければ作ってから、その値にオブジェクト型でデータを渡す
       routeMatrixMap.set(row.originIndex, []);
-      routeMatrixMap.get(row.originIndex).push({ destinationIndex: row.destinationIndex, duration: row.duration, distanceMeters: row.originIndex === row.distinationIndex ? 0 : row.distanceMeters });
+      routeMatrixMap.get(row.originIndex).push({ destinationIndex: row.destinationIndex, duration: row.duration, distanceMeters: row.originIndex === row.destinationIndex ? 0 : row.distanceMeters });
     }
   }
   return routeMatrixMap;
@@ -465,6 +465,26 @@ const distanceTwoOptAlgorithm = (initialOrder, routeMatrixMap) => {
   }
   return bestOrder;
 };
+// 時間帯ごとのlegendに配達順住所のliを返す関数定義
+const showDeliveryOrder = (timeSlots, bestOrder1820, bestOrder1921) => {
+  // 生成された順番のインデックス番号をtimeSlotsの住所にリンクさせる
+  const ordered1820 = bestOrder1820.map(i => timeSlots['18-20'][i - 1]);
+  const ordered1921 = bestOrder1921.map(i => timeSlots['19-21'][i - 1]);
+  // olを取得、li要素を作っていく
+  const fillTimeSlot = (olSelector, addressArray) => {
+    const ol = document.querySelector(olSelector);
+    ol.innerHTML = '';
+
+    addressArray.forEach(address => {
+      const li = document.createElement('li');
+      li.textContent = address;
+      ol.appendChild(li);
+    });
+  };
+
+  fillTimeSlot('#time-slot-18-20', ordered1820);
+  fillTimeSlot('#time-slot-19-21', ordered1921);
+};
 
 
 
@@ -531,36 +551,13 @@ generateOrderButton.addEventListener('click', async (e) => {
   // まずはGreedyAlgorithmで元のルートを生成、これを2-optで改善していく(距離)
   const distanceInitialOrder1820 = distanceGreedyAlgorithm(routeMatrixMap1820);
   const bestOrder1820 = distanceTwoOptAlgorithm(distanceInitialOrder1820, routeMatrixMap1820);
-  console.log(bestOrder1820);
-  
   // 以下19-21時の処理
   const slot1921 = createSlot1921(result);
   const payload1921 = createPayload(slot1921);
   const data1921 = await sendToComputeRouteMatrixApi(payload1921);
   const routeMatrixMap1921 = createRouteMatrixMap(data1921);
   const distanceGreedyAlgorithm1921 = distanceGreedyAlgorithm(routeMatrixMap1921);
-  const bestOrder1921 = distanceTwoOptAlgorithm(distanceGreedyAlgorithm1921, routeMatrixMap1921);
-  console.log(bestOrder1921.reverse());
-
-
-  // 以下時間帯ごとのlegendに配達順住所のliを返す処理のお試し
-const hoge = groupByTimeSlot();
-
-const ordered1820 = bestOrder1820.map(i => hoge['18-20'][i - 1]);
-const ordered1921 = bestOrder1921.map(i => hoge['19-21'][i - 1]);
-
-const fillTimeSlot = (ulSelector, addressArray) => {
-  const ol = document.querySelector(ulSelector);
-  ol.innerHTML = '';
-
-  addressArray.forEach(address => {
-    const li = document.createElement('li');
-    li.textContent = address;
-    ol.appendChild(li);
-  });
-};
-
-fillTimeSlot('#time-slot-18-20', ordered1820);
-fillTimeSlot('#time-slot-19-21', ordered1921);
-
+  const bestOrder1921 = distanceTwoOptAlgorithm(distanceGreedyAlgorithm1921, routeMatrixMap1921).reverse();
+  // HTMLに配達順に表示する
+  showDeliveryOrder(timeSlots, bestOrder1820, bestOrder1921);
 });
